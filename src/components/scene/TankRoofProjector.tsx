@@ -1,16 +1,19 @@
 import { useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
+import { getSensorById } from '../../data/floatingRoofSensors'
 import { getTankById } from '../../data/mock'
 import { getFloatingRoofTopCenterWorld } from './tankSceneGeometry'
+import { getSensorWorldPosition } from './roofSensorGeometry'
 import { tankRoofNdc } from './tankLinkState'
 
 type Props = {
   tankId: string
+  sensorId?: string | null
 }
 
-/** Projects roof-top world position to NDC only — never touches the DOM. */
-export function TankRoofProjector({ tankId }: Props) {
+/** Projects roof / sensor world position to NDC only — never touches the DOM. */
+export function TankRoofProjector({ tankId, sensorId }: Props) {
   const world = useMemo(() => new THREE.Vector3(), [])
 
   useFrame(({ camera }) => {
@@ -20,7 +23,13 @@ export function TankRoofProjector({ tankId }: Props) {
       return
     }
 
-    getFloatingRoofTopCenterWorld(tank, world)
+    if (sensorId) {
+      const sensor = getSensorById(tankId, sensorId)
+      if (sensor) getSensorWorldPosition(tank, sensor, world)
+      else getFloatingRoofTopCenterWorld(tank, world)
+    } else {
+      getFloatingRoofTopCenterWorld(tank, world)
+    }
     world.project(camera)
 
     const onScreen =

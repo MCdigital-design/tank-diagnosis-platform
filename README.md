@@ -2,7 +2,7 @@
 
 基于设计稿实现的罐区智能监控大屏（React + Vite + ECharts + React Three Fiber）。
 
-**Current baseline:** [v1.0.0](VERSIONS.md) (`git tag v1.0.0`) — see [VERSIONS.md](VERSIONS.md) for the version index and how to revert.
+**Current baseline:** [v1.1.0](VERSIONS.md) (`git tag v1.1.0`) — floating-roof IoT, readable UI, stable layout. See [VERSIONS.md](VERSIONS.md) for the full index and how to revert to v1.0.0.
 
 ## 运行
 
@@ -27,15 +27,17 @@ npm run build
 npm run preview
 ```
 
-## 3D 交互场景 (v1)
+## 3D 交互场景 (v1.1)
 
 中央视区为 **真实 WebGL 3D**（非贴图）：
 
 - 两个圆柱储罐，可 **旋转 / 缩放 / 平移**（OrbitControls）
 - **悬停高亮**，**点击储罐** 打开右侧固定信息卡 + 绿色连接线
+- **浮盘屋面测点**（绿/黄/红）可点击，查看时序与报警关联（储罐02 对标 TG04）
 - 指针与罐体对齐（适配整页 `scale` 缩放）
-- 代码：`src/components/scene/TankScene3D.tsx`
+- 顶栏 **字号**（标准 / 大 / 特大）便于阅读
+- 代码：`src/components/scene/TankScene3D.tsx`，传感数据：`src/data/floatingRoofSensors.ts`
 
 ## 说明
 
-当前为前端演示版本，数据来自 `src/data/mock.ts`。对接真实 SCADA/物联网 API 时，可替换 mock 数据并扩展各导航模块页面。
+当前为前端演示版本，数据来自 `src/data/mock.ts` 与 `src/data/floatingRoofSensors.ts`。对接真实 SCADA/物联网 API 时，可替换上述数据并扩展各导航模块页面。新功能请从 **`v1.1.0`** 分支开发（见 VERSIONS.md）。

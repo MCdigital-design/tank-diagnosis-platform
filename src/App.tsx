@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { FontSizeControl } from './components/FontSizeControl'
 import { DashboardFooter, DashboardLeft, DashboardRight } from './components/DashboardPanels'
 import { TankScene3D } from './components/scene/TankScene3D'
 import { DESIGN_HEIGHT, DESIGN_WIDTH, useViewportScale } from './hooks/useViewportScale'
@@ -51,6 +52,7 @@ export default function App() {
               </p>
             </div>
             <div className="header__center">
+              <FontSizeControl />
               <span className="header__time">{now}</span>
             </div>
             <div className="header__alert">

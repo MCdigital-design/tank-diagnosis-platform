@@ -35,9 +35,13 @@ export const todaySummary = [
   { label: '综合健康', value: '89', unit: '/100' },
 ]
 
+import { initTankSensorSuites } from './floatingRoofSensors'
+
 export type Tank3DData = {
   id: string
   label: string
+  /** 现场对标罐号（浮盘传感布局参考） */
+  referenceTankCode?: string
   status: string
   medium: string
   level: number
@@ -64,6 +68,7 @@ export const tanks3D: Tank3DData[] = [
   {
     id: 'T-01',
     label: '储罐01',
+    referenceTankCode: 'TG01',
     status: '正常',
     medium: '原油',
     level: 72.4,
@@ -84,6 +89,7 @@ export const tanks3D: Tank3DData[] = [
   {
     id: 'T-02',
     label: '储罐02',
+    referenceTankCode: 'TG04',
     status: '关注',
     medium: '柴油',
     level: 45.8,
@@ -104,12 +110,59 @@ export const tanks3D: Tank3DData[] = [
   },
 ]
 
-export const alerts = [
+export type AlertItem = {
+  id: string
+  time: string
+  text: string
+  target: string
+  sensorId?: string
+  level?: 'ok' | 'warn' | 'alarm'
+}
+
+export const alerts: AlertItem[] = [
   { id: 'a1', time: '14:32', text: '浮盘位移预警', target: '储罐07' },
   { id: 'a2', time: '14:21', text: '静电风险提示', target: '储罐03' },
-  { id: 'a3', time: '14:18', text: '液位波动关注', target: '储罐02' },
+  {
+    id: 'a3',
+    time: '14:18',
+    text: '液位波动关注',
+    target: '储罐02',
+    level: 'warn',
+  },
   { id: 'a4', time: '14:10', text: '防腐巡检计划', target: '泵组02' },
+  {
+    id: 'a5',
+    time: '14:36',
+    text: '浮盘温度 T4_1 超限报警',
+    target: '储罐02',
+    sensorId: 'T4_1',
+    level: 'alarm',
+  },
+  {
+    id: 'a6',
+    time: '14:35',
+    text: '浮盘温度 T4_3 超限报警',
+    target: '储罐02',
+    sensorId: 'T4_3',
+    level: 'alarm',
+  },
+  {
+    id: 'a7',
+    time: '14:34',
+    text: '浮盘温度 T4_4 温度预警',
+    target: '储罐02',
+    sensorId: 'T4_4',
+    level: 'warn',
+  },
 ]
+
+initTankSensorSuites(
+  tanks3D.map((t) => ({
+    id: t.id,
+    radius: t.radius,
+    referenceCode: t.referenceTankCode,
+  })),
+)
 
 export function getTankById(id: string) {
   return tanks3D.find((t) => t.id === id)

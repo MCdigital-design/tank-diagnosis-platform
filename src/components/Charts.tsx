@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react'
 import * as echarts from 'echarts'
+import type { SensorStatus, SensorTimePoint } from '../data/floatingRoofSensors'
+import { SENSOR_STATUS_COLORS } from '../data/floatingRoofSensors'
 import { healthDistribution, utilization } from '../data/mock'
 
 export function UtilizationGauge({ highlightPercent }: { highlightPercent?: number }) {
@@ -97,4 +99,77 @@ export function HealthDonut({ highlightHealth }: { highlightHealth?: number }) {
   }, [highlightHealth])
 
   return <div className="donut-chart" ref={ref} />
+}
+
+export function SensorTimeSeriesChart({
+  points,
+  unit,
+  status,
+}: {
+  points: SensorTimePoint[]
+  unit: string
+  status: SensorStatus
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!ref.current) return
+    const chart = echarts.init(ref.current)
+    const color = SENSOR_STATUS_COLORS[status]
+    chart.setOption({
+      grid: { left: 36, right: 12, top: 12, bottom: 22 },
+      tooltip: {
+        trigger: 'axis',
+        formatter: (params: unknown) => {
+          const p = (params as { dataIndex: number }[])[0]
+          if (!p) return ''
+          const pt = points[p.dataIndex]
+          return `${pt.time}<br/>${pt.value} ${unit}`
+        },
+      },
+      xAxis: {
+        type: 'category',
+        data: points.map((p) => p.time),
+        axisLabel: { color: '#6a8aaa', fontSize: 9, interval: 3 },
+        axisLine: { lineStyle: { color: 'rgba(56,120,200,0.35)' } },
+      },
+      yAxis: {
+        type: 'value',
+        scale: true,
+        axisLabel: { color: '#6a8aaa', fontSize: 9 },
+        splitLine: { lineStyle: { color: 'rgba(30,70,120,0.25)' } },
+      },
+      series: [
+        {
+          type: 'line',
+          smooth: true,
+          symbol: 'none',
+          data: points.map((p) => p.value),
+          lineStyle: { color, width: 2 },
+          areaStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              {
+                offset: 0,
+                color:
+                  status === 'alarm'
+                    ? 'rgba(255,77,109,0.35)'
+                    : status === 'warn'
+                      ? 'rgba(255,179,71,0.35)'
+                      : 'rgba(0,229,160,0.35)',
+              },
+              { offset: 1, color: 'rgba(0,0,0,0)' },
+            ]),
+          },
+        },
+      ],
+    })
+    const onResize = () => chart.resize()
+    window.addEventListener('resize', onResize)
+    return () => {
+      window.removeEventListener('resize', onResize)
+      chart.dispose()
+    }
+  }, [points, unit, status])
+
+  return <div className="sensor-ts-chart" ref={ref} />
 }

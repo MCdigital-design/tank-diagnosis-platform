@@ -5,6 +5,8 @@ import { useTankSelection } from '../../context/TankSelectionContext'
 import { tanks3D } from '../../data/mock'
 import { scaledCanvasEvents } from './scaledCanvasEvents'
 import { SceneSelectionLink, type SceneSelectionLinkHandle } from './SceneSelectionLink'
+import { RoofSensorMarkers } from './RoofSensorMarkers'
+import { SensorDetailCard } from './SensorDetailCard'
 import { TankIdCard } from './TankIdCard'
 import { TankRoofProjector } from './TankRoofProjector'
 import { useSelectionLinkLoop } from './useSelectionLinkLoop'
@@ -93,10 +95,12 @@ function SimpleTank({
 
 type SceneProps = {
   activeTankId: string | null
+  activeSensorId: string | null
   onSelectTank: (id: string) => void
+  onSelectSensor: (id: string) => void
 }
 
-function Scene({ activeTankId, onSelectTank }: SceneProps) {
+function Scene({ activeTankId, activeSensorId, onSelectTank, onSelectSensor }: SceneProps) {
   const tankMeshes = tanks3D.map((t, i) => ({
     id: t.id,
     position: t.position,
@@ -148,7 +152,16 @@ function Scene({ activeTankId, onSelectTank }: SceneProps) {
         maxPolarAngle={Math.PI / 2 - 0.08}
       />
 
-      {activeTankId && <TankRoofProjector tankId={activeTankId} />}
+      {activeTankId && (
+        <>
+          <RoofSensorMarkers
+            tankId={activeTankId}
+            activeSensorId={activeSensorId}
+            onSelectSensor={onSelectSensor}
+          />
+          <TankRoofProjector tankId={activeTankId} sensorId={activeSensorId} />
+        </>
+      )}
     </>
   )
 }
@@ -157,11 +170,17 @@ export function TankScene3D() {
   const {
     activeTank,
     activeTankId,
+    activeSensor,
+    activeSensorId,
+    sensorSuite,
+    sensorSummary,
     pinned,
     selectTank,
+    selectSensor,
     togglePin,
     clearTank,
-    dismissIfUnpinned,
+    clearSensor,
+    dismissInteraction,
   } = useTankSelection()
   const viewportRef = useRef<HTMLDivElement>(null)
   const cardRef = useRef<HTMLDivElement>(null)
@@ -181,32 +200,53 @@ export function TankScene3D() {
   return (
     <div className="scene scene--interactive">
       <p className="scene__hint">
-        拖拽旋转 · 滚轮缩放 · 右键平移 · 悬停高亮 · 点击储罐打开右侧信息卡
-        {pinned ? ' · 已固定选中' : ' · 点击空白关闭'}
+        拖拽旋转 · 滚轮缩放 · 点击储罐打开信息卡 · 选中罐后点击浮盘测点查看时序
+        {pinned ? ' · 已固定' : ' · 空白处先关测点再关罐'}
       </p>
       <div className="scene__viewport" ref={viewportRef}>
         <Canvas
           events={scaledCanvasEvents}
           camera={{ position: [9, 5.5, 11], fov: 48, near: 0.1, far: 200 }}
           gl={{ antialias: true, alpha: false }}
-          onPointerMissed={() => dismissIfUnpinned()}
+          onPointerMissed={() => dismissInteraction()}
           style={{ background: '#0a1420' }}
         >
-          <Scene activeTankId={activeTankId} onSelectTank={selectTank} />
+          <Scene
+            activeTankId={activeTankId}
+            activeSensorId={activeSensorId}
+            onSelectTank={selectTank}
+            onSelectSensor={selectSensor}
+          />
         </Canvas>
 
         {activeTank && <SceneSelectionLink onReady={attachLinkPainter} />}
 
         {activeTank && (
           <aside className="scene__id-dock" aria-label={`${activeTank.label} 信息卡`}>
-            <p className="scene__id-dock-label">储罐详情</p>
-            <TankIdCard
-              ref={cardRef}
-              tank={activeTank}
-              pinned={pinned}
-              onPinToggle={togglePin}
-              onClose={clearTank}
-            />
+            <p className="scene__id-dock-label">
+              {activeSensor ? `测点 · ${activeSensor.label}` : '储罐详情'}
+            </p>
+            <div className="scene__id-dock-stack" ref={cardRef}>
+              {!activeSensor && (
+                <TankIdCard
+                  tank={activeTank}
+                  pinned={pinned}
+                  sensorSuite={sensorSuite}
+                  sensorSummary={sensorSummary}
+                  activeSensorId={activeSensorId}
+                  onPinToggle={togglePin}
+                  onClose={clearTank}
+                  onSelectSensor={selectSensor}
+                />
+              )}
+              {activeSensor && (
+                <SensorDetailCard
+                  sensor={activeSensor}
+                  referenceTankCode={activeTank.referenceTankCode}
+                  onClose={clearSensor}
+                />
+              )}
+            </div>
           </aside>
         )}
       </div>
@@ -217,7 +257,9 @@ export function TankScene3D() {
               当前：{activeTank.label}
               {pinned ? '（已固定，可自由旋转场景）' : ''}
             </strong>
-            <span>信息卡固定在视口右侧；绿线连接浮盘顶面中心与信息卡左侧中部</span>
+            <span>
+              信息卡固定右侧；引线连接{activeSensor ? '选中测点' : '浮盘顶面中心'}与信息卡
+            </span>
           </>
         ) : (
           <span>将鼠标移到储罐上会高亮，点击圆柱体打开信息卡</span>
