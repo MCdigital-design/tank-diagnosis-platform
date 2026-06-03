@@ -1,0 +1,6 @@
+node_modules/
+dist/
+.dev-server.pid
+dev-server.log
+dev-server.err.log
+tsconfig.tsbuildinfo
