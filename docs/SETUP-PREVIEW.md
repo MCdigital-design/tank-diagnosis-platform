@@ -12,14 +12,24 @@
 
 ### 1. GitHub 仓库与首次推送
 
-若本地尚无 `origin`：
-
-1. 在 GitHub 新建仓库（建议名：`tank-diagnosis-platform`，Private）
-2. 本地执行：
+本地已提交 `v1.2.0`（含 Actions 工作流）。**Cursor 连 GitHub ≠ 本机 `gh` 已登录**，需完成一次终端授权：
 
 ```powershell
 cd "C:\Users\elimi\Downloads\罐区智能"
-git remote add origin https://github.com/<你的用户名>/tank-diagnosis-platform.git
+gh auth login
+# 选 GitHub.com → HTTPS → Login with a web browser，按提示输入设备码
+```
+
+授权后**一条命令**创建私有仓库并推送（仓库名可改）：
+
+```powershell
+gh repo create tank-diagnosis-platform --private --source=. --remote=origin --push
+```
+
+若你已在 GitHub 网页建好空仓库，则：
+
+```powershell
+git remote add origin https://github.com/<用户名>/tank-diagnosis-platform.git
 git push -u origin master
 ```
 
