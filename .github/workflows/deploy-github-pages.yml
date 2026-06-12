@@ -27,6 +27,9 @@ jobs:
       - run: npm run build
         env:
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
+          VITE_PREVIEW_AUTH: 'true'
+          VITE_PREVIEW_USER: ${{ secrets.PREVIEW_USER }}
+          VITE_PREVIEW_PASS: ${{ secrets.PREVIEW_PASS }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

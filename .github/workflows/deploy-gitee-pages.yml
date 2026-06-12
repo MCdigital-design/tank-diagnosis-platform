@@ -42,4 +42,7 @@ jobs:
           git config user.name "GitHub Actions"
           git add -A
           git commit -m "deploy: ${{ github.sha }} ${{ github.event.inputs.label || github.ref_name }}"
+          # Push to pages branch (enable Gitee Pages on this branch if available)
           git push -f "https://oauth2:${GITEE_TOKEN}@gitee.com/${GITEE_REPO}.git" HEAD:pages
+          # Also push to master so repo has deployable files if Pages uses master
+          git push -f "https://oauth2:${GITEE_TOKEN}@gitee.com/${GITEE_REPO}.git" HEAD:master

@@ -8,7 +8,7 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$GiteeToken,
 
-    [string]$RepoName = 'tank-diagnosis-platform',
+    [string]$RepoName = 'z-float',
     [string]$GithubRepo = 'MCdigital-design/tank-diagnosis-platform'
 )
 
