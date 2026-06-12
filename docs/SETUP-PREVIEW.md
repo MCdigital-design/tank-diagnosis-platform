@@ -27,14 +27,16 @@ npm run preview:dist
 
 **说明：** `dev:bg` 故意不启用登录，方便改代码。要看登录门请用 `dev:preview` 或 `preview:dist`。
 
-## GitHub Secrets（预览部署必填）
+## GitHub Secrets（预览部署）
 
-**Settings → Secrets and variables → Actions：**
+**已设置：** `PREVIEW_USER`、`PREVIEW_PASS`
+
+**Gitee 一键配置：** 见 [`GITEE-SETUP.md`](./GITEE-SETUP.md) → 运行 `scripts/setup-gitee.ps1 -GiteeToken "..."`
 
 | Name | 值 |
 |------|-----|
-| `PREVIEW_USER` | `Z-Float` |
-| `PREVIEW_PASS` | `008AAA` |
+| `PREVIEW_USER` | `Z-Float`（已设置） |
+| `PREVIEW_PASS` | `008AAA`（已设置） |
 
 **腾讯云 COS（大陆链接，账号就绪后添加）：**
 
@@ -56,9 +58,11 @@ npm run preview:dist
 
 ## 发布备选（Gitee）
 
-1. Gitee 建库并确认 **Gitee Pages** 可用
-2. 配置 `GITEE_TOKEN`、`GITEE_REPO`
-3. **Actions** → **Deploy Gitee Pages** → **Run workflow**
+```powershell
+.\scripts\setup-gitee.ps1 -GiteeToken "你的令牌"
+```
+
+然后在 Gitee 仓库启用 **Gitee Pages**（分支 `pages`）。详见 [`GITEE-SETUP.md`](./GITEE-SETUP.md)。
 
 ## GitHub Pages 说明
 
