@@ -4,10 +4,61 @@ Baseline releases for the **储罐运行诊断指挥平台**. Use these tags to 
 
 | Version | Git tag | Date | Summary |
 |---------|---------|------|---------|
+| **v1.2 (Tier 1)** | `v1.2.0` | 2026-06-10 | 浮盘行程状态机、密封区火警、静电接地监测（见 `docs/PRD-TIER1.md`） |
+| **v1.1.1 (preview-ready)** | `v1.1.1` | 2026-06-03 | Self-hosted fonts, demo banner/toast/modal, gauge fix, 3D scope hints, WebGL fallback |
 | **v1.1 (foundation)** | `v1.1.0` | 2026-06-03 | TG04 floating-roof IoT, sensor 3D markers, readable UI + 字号 control; stable v1 grid layout |
 | **v1 (ground zero)** | `v1.0.0` | 2026-06-03 | Interactive 3D tanks, fixed ID card dock, selection link, scaled pointer fix |
 
-**Recommended starting point for new work:** `v1.1.0`
+**Recommended starting point for new work:** `v1.2.0`
+
+---
+
+## v1.2.0 — Tier 1 浮盘健康监测三件套
+
+**Tag:** `v1.2.0` · PRD: `docs/PRD-TIER1.md`
+
+### 新增
+
+- **浮盘行程状态机** — `floatingRoofState.ts`；高度/速率/接近高限/落底；左栏「浮盘行程」+ 3D 侧标尺
+- **密封区火警** — T4_x 语义升级；第四级 `fire`；T4_1 火警演示；罐卡红横幅 + 告警置顶
+- **静电接地** — `grounding` 测点（方标 3D）；G4_2 断开演示；设备清单与底部读数
+
+### 演示路径
+
+1. 选 **储罐02** → 黄色「接近高限」+ 浮盘行程面板
+2. 告警列表火警 T4_1 → 跳转测点脉冲
+3. G4_2 接地断开 → 方标 + 告警
+
+落底演示：改 `src/data/floatingRoofState.ts` 中 `DEMO_LANDED_TANK_ID = 'T-01'`
+
+---
+
+## v1.1.1 — preview-ready (P0 + P1)
+
+**Tag:** `v1.1.1`
+
+### P0
+
+- Self-hosted **Noto Sans SC** + **Orbitron** via `@fontsource` (removed Google Fonts from `index.html`)
+- **DemoBanner** — 内部演示 / 首次加载说明
+- Deploy notes: `docs/PREVIEW-DEPLOY.md`
+
+### P1
+
+- **UtilizationGauge** uses selected tank `level` when a tank is focused
+- **DemoNoticeContext** — toast for nav, quick actions, T-07 minimap
+- **应急广播** — `DemoModal` with demo disclaimer
+- **3D scope** hints (储罐01/02 only; T-07 overview-only)
+- **SceneCanvas** + `isWebGLAvailable()` fallback panel
+
+### Restore
+
+```bash
+git checkout v1.1.1
+npm install
+npm run build
+npm run dev:bg
+```
 
 ---
 

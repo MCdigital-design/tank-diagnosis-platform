@@ -4,3 +4,6 @@ dist/
 dev-server.log
 dev-server.err.log
 tsconfig.tsbuildinfo
+
+# Legacy ForceControl export — local reference only; too large for GitHub preview repo
+docs/Project/

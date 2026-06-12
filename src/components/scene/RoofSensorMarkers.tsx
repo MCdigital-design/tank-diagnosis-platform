@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useCursor } from '@react-three/drei'
+import { useFrame } from '@react-three/fiber'
 import type { ThreeEvent } from '@react-three/fiber'
+import type { Mesh } from 'three'
 import {
   SENSOR_STATUS_COLORS,
   getRoofMarkersForTank,
@@ -18,6 +20,7 @@ type MarkerProps = {
 
 function SensorMarker({ tankId, sensor, selected, onSelect }: MarkerProps) {
   const [hovered, setHovered] = useState(false)
+  const meshRef = useRef<Mesh>(null)
   useCursor(hovered && !selected, 'pointer')
 
   const tank = getTankById(tankId)
@@ -25,8 +28,25 @@ function SensorMarker({ tankId, sensor, selected, onSelect }: MarkerProps) {
 
   const world = getSensorWorldPosition(tank, sensor)
   const color = SENSOR_STATUS_COLORS[sensor.status]
+  const isFire = sensor.status === 'fire'
+  const isGrounding = sensor.type === 'grounding'
   const scale = selected ? 1.35 : hovered ? 1.15 : 1
-  const emissiveIntensity = selected ? 0.85 : hovered ? 0.55 : sensor.status === 'alarm' ? 0.45 : 0.2
+  const emissiveIntensity = selected
+    ? 0.85
+    : hovered
+      ? 0.55
+      : sensor.status === 'fire' || sensor.status === 'alarm'
+        ? 0.55
+        : 0.2
+
+  useFrame((state) => {
+    if (!meshRef.current || !isFire) return
+    const pulse = 0.45 + Math.sin(state.clock.elapsedTime * 6) * 0.35
+    const mat = meshRef.current.material
+    if (mat && 'emissiveIntensity' in mat) {
+      ;(mat as { emissiveIntensity: number }).emissiveIntensity = pulse
+    }
+  })
 
   const handleClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation()
@@ -36,6 +56,7 @@ function SensorMarker({ tankId, sensor, selected, onSelect }: MarkerProps) {
   return (
     <group position={[world.x, world.y, world.z]}>
       <mesh
+        ref={meshRef}
         scale={scale}
         onClick={handleClick}
         onPointerOver={(e) => {
@@ -47,7 +68,11 @@ function SensorMarker({ tankId, sensor, selected, onSelect }: MarkerProps) {
           setHovered(false)
         }}
       >
-        <sphereGeometry args={[0.11, 12, 12]} />
+        {isGrounding ? (
+          <boxGeometry args={[0.14, 0.14, 0.14]} />
+        ) : (
+          <sphereGeometry args={[0.11, 12, 12]} />
+        )}
         <meshStandardMaterial
           color={color}
           emissive={color}

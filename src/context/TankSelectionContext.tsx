@@ -6,6 +6,12 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { sortAlerts } from '../data/alertUtils'
+import {
+  getFloatingRoofTravel,
+  getRoofTravelAlerts,
+  type FloatingRoofTravel,
+} from '../data/floatingRoofState'
 import {
   getSensorById,
   getSensorAlertsFromSuite,
@@ -28,7 +34,7 @@ type TankSelectionContextValue = {
   activeSensor: RoofSensor | null
   sensorSuite: ReturnType<typeof getSensorSuiteForTank>
   sensorSummary: ReturnType<typeof getSensorSummary> | null
-  /** 固定后，点击空白不会取消选中 */
+  roofTravel: FloatingRoofTravel | null
   pinnedTankId: string | null
   pinned: boolean
   relatedAlerts: AlertItem[]
@@ -38,7 +44,6 @@ type TankSelectionContextValue = {
   clearTank: () => void
   clearSensor: () => void
   togglePin: () => void
-  /** 空白点击：先关传感点，再关罐（未固定时） */
   dismissInteraction: () => void
 }
 
@@ -57,6 +62,7 @@ export function TankSelectionProvider({ children }: { children: ReactNode }) {
       : null
   const sensorSuite = getSensorSuiteForTank(activeTankId)
   const sensorSummary = activeTankId ? getSensorSummary(activeTankId) : null
+  const roofTravel = getFloatingRoofTravel(activeTankId)
 
   const selectTank = useCallback((id: string) => {
     setActiveTankId(id)
@@ -104,13 +110,15 @@ export function TankSelectionProvider({ children }: { children: ReactNode }) {
     if (!activeTank) return []
     const base = getAlertsForTank(activeTank)
     const fromSensors = getSensorAlertsFromSuite(activeTank.id, activeTank.label)
-    const merged = [...fromSensors, ...base]
+    const fromTravel = getRoofTravelAlerts(activeTank.id, activeTank.label)
+    const merged = [...fromSensors, ...fromTravel, ...base]
     const seen = new Set<string>()
-    return merged.filter((a) => {
+    const unique = merged.filter((a) => {
       if (seen.has(a.id)) return false
       seen.add(a.id)
       return true
     })
+    return sortAlerts(unique)
   }, [activeTank])
 
   const value = useMemo<TankSelectionContextValue>(
@@ -121,6 +129,7 @@ export function TankSelectionProvider({ children }: { children: ReactNode }) {
       activeSensor,
       sensorSuite,
       sensorSummary,
+      roofTravel,
       pinnedTankId,
       pinned,
       relatedAlerts,
@@ -139,6 +148,7 @@ export function TankSelectionProvider({ children }: { children: ReactNode }) {
       activeSensorId,
       sensorSuite,
       sensorSummary,
+      roofTravel,
       pinnedTankId,
       pinned,
       relatedAlerts,

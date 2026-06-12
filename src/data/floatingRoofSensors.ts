@@ -3,23 +3,29 @@
  * 屋面坐标：相对罐心 (x, z)，单位米，由罐半径与 layout 比例换算
  */
 
-export type SensorStatus = 'ok' | 'warn' | 'alarm'
-export type SensorType = 'temperature' | 'liquid_level' | 'tilt'
+export type SensorStatus = 'ok' | 'warn' | 'alarm' | 'fire'
+export type SensorType = 'temperature' | 'liquid_level' | 'tilt' | 'grounding'
 
 export type SensorTimePoint = { time: string; value: number }
+
+export type GroundingStatusEvent = { time: string; connected: boolean }
 
 export type RoofSensor = {
   id: string
   label: string
   type: SensorType
-  /** 罐体局部屋面坐标 (x, z)，y 由浮盘顶面高度决定 */
+  /** 罐体局部屋面坐标 (x, z)，y 由浮盘顶面高度决定；接地罐体点用 placement */
   roofXZ: [number, number]
   value: number
   unit: string
   status: SensorStatus
   timeSeries: SensorTimePoint[]
-  /** 工业阈值说明（展示用） */
   thresholdNote: string
+  /** 接地专用 */
+  connected?: boolean
+  statusEvents?: GroundingStatusEvent[]
+  /** 接地罐体点：挂在罐壁低位 */
+  placement?: 'roof' | 'shell'
 }
 
 export type DeviceInventoryRow = {
@@ -31,28 +37,45 @@ export type DeviceInventoryRow = {
 
 export type FloatingRoofSensorSuite = {
   suiteId: string
-  /** 对标现场罐号，如 TG04 */
   referenceTankCode: string
   inventory: DeviceInventoryRow[]
   sensors: RoofSensor[]
+}
+
+export type SensorSummary = {
+  ok: number
+  warn: number
+  alarm: number
+  fire: number
+  total: number
 }
 
 export const SENSOR_STATUS_COLORS: Record<SensorStatus, string> = {
   ok: '#00e5a0',
   warn: '#ffb347',
   alarm: '#ff4d6d',
+  fire: '#b91c1c',
 }
 
 export const SENSOR_STATUS_LABELS: Record<SensorStatus, string> = {
   ok: '正常',
   warn: '预警',
   alarm: '报警',
+  fire: '火警',
 }
+
+const SEAL_TEMP_THRESHOLD_NOTE =
+  '一次/二次密封圈温度监测 · 火灾预警 · 火警 ≥11.0°C · 报警 ≥10.75°C · 预警 ≥10.45°C'
 
 const HOURS = 24
 
 function buildSeries(base: number, spread: number, status: SensorStatus): SensorTimePoint[] {
-  const bump = status === 'alarm' ? spread * 1.4 : status === 'warn' ? spread * 0.8 : spread * 0.35
+  const bump =
+    status === 'fire' || status === 'alarm'
+      ? spread * 1.4
+      : status === 'warn'
+        ? spread * 0.8
+        : spread * 0.35
   return Array.from({ length: HOURS }, (_, i) => {
     const h = (new Date().getHours() - (HOURS - 1 - i) + 48) % 24
     const label = `${String(h).padStart(2, '0')}:00`
@@ -61,7 +84,19 @@ function buildSeries(base: number, spread: number, status: SensorStatus): Sensor
   })
 }
 
+function buildGroundingEvents(connected: boolean): GroundingStatusEvent[] {
+  const events: GroundingStatusEvent[] = []
+  for (let i = HOURS - 1; i >= 0; i--) {
+    const h = (new Date().getHours() - i + 48) % 24
+    const label = `${String(h).padStart(2, '0')}:00`
+    const wasConnected = i > 2 || connected
+    events.push({ time: label, connected: wasConnected })
+  }
+  return events
+}
+
 function tempStatus(value: number): SensorStatus {
+  if (value >= 11.0) return 'fire'
   if (value >= 10.75) return 'alarm'
   if (value >= 10.45) return 'warn'
   return 'ok'
@@ -80,9 +115,8 @@ function tiltStatus(value: number): SensorStatus {
   return 'ok'
 }
 
-/** TG04 温度读数（与参考屏底部一致，T4_1 / T4_3 / T4_4 为报警点） */
 const TG04_TEMP_VALUES: Record<string, number> = {
-  T4_1: 10.91234,
+  T4_1: 11.24,
   T4_2: 10.03636,
   T4_3: 10.88421,
   T4_4: 10.79102,
@@ -102,12 +136,6 @@ const TG04_TEMP_VALUES: Record<string, number> = {
   T4_18: 9.92345,
 }
 
-/**
- * 屋面测点布局 — 同心环、等角度，贴近现场浮盘布线习惯：
- * - 外环（rim）：温度 T4_x，密封圈/边缘热监测
- * - 中环：翻液 D4_x，略向内错开半扇区，避免与温度点重叠
- * - 内环：倾角（少点），靠近中心仍沿径向均匀分布
- */
 const ROOF_RING = {
   rim: 0.93,
   mid: 0.72,
@@ -117,6 +145,8 @@ const ROOF_RING = {
 const TG04_TEMP_IDS = Array.from({ length: 18 }, (_, i) => `T4_${i + 1}`)
 const TG04_LEVEL_IDS = Array.from({ length: 10 }, (_, i) => `D4_${i + 1}`)
 const TG04_TILT_IDS = ['D4_1', 'D4_2', 'D4_3', 'D4_4'] as const
+const TG04_GROUND_ROOF_IDS = ['G4_1', 'G4_2', 'G4_3', 'G4_4']
+const TG04_GROUND_SHELL_IDS = ['G4_T1', 'G4_T2']
 
 function ringLayout(
   ids: string[],
@@ -131,17 +161,15 @@ function ringLayout(
   }))
 }
 
-/** 18 点温度：外环等分（起始 180°，T4_1 在左侧缘，与 TG04 参考图一致） */
 const TG04_TEMP_LAYOUT = ringLayout(TG04_TEMP_IDS, ROOF_RING.rim, 180)
-
-/** 10 点液位：中环，相对外环错开半扇区 */
 const TG04_LEVEL_LAYOUT = ringLayout(
   TG04_LEVEL_IDS,
   ROOF_RING.mid,
   180 + 360 / TG04_LEVEL_IDS.length / 2,
 )
-
 const TG04_TILT_LAYOUT = ringLayout([...TG04_TILT_IDS], ROOF_RING.inner, 45)
+const TG04_GROUND_ROOF_LAYOUT = ringLayout(TG04_GROUND_ROOF_IDS, ROOF_RING.inner, 90)
+const TG04_GROUND_SHELL_LAYOUT = ringLayout(TG04_GROUND_SHELL_IDS, 1.02, 0)
 
 const TG04_LEVEL_VALUES: Record<string, number> = {
   D4_1: 0.0,
@@ -163,10 +191,44 @@ const TG04_TILT_VALUES: Record<string, number> = {
   D4_4: 0.01,
 }
 
+const TG04_GROUND_CONNECTED: Record<string, boolean> = {
+  G4_1: true,
+  G4_2: false,
+  G4_3: true,
+  G4_4: true,
+  G4_T1: true,
+  G4_T2: true,
+}
+
 function layoutToXZ(angleDeg: number, r01: number, roofRadius: number): [number, number] {
   const rad = (angleDeg * Math.PI) / 180
   const r = r01 * roofRadius * 0.92
   return [Math.cos(rad) * r, Math.sin(rad) * r]
+}
+
+function buildGroundingSensor(
+  id: string,
+  angleDeg: number,
+  r01: number,
+  roofRadius: number,
+  placement: 'roof' | 'shell',
+): RoofSensor {
+  const connected = TG04_GROUND_CONNECTED[id] ?? true
+  const status: SensorStatus = connected ? 'ok' : 'alarm'
+  return {
+    id,
+    label: id,
+    type: 'grounding',
+    roofXZ: layoutToXZ(angleDeg, r01, roofRadius),
+    value: connected ? 1 : 0,
+    unit: '',
+    status,
+    connected,
+    timeSeries: [],
+    statusEvents: buildGroundingEvents(connected),
+    thresholdNote: placement === 'shell' ? '罐体静电导出 · 连接监测' : '浮盘静电线 · 连接监测',
+    placement,
+  }
 }
 
 export function buildTg04Sensors(roofRadius: number): RoofSensor[] {
@@ -182,7 +244,7 @@ export function buildTg04Sensors(roofRadius: number): RoofSensor[] {
       unit: '°C',
       status,
       timeSeries: buildSeries(value, 0.35, status),
-      thresholdNote: '浮盘表面温度 · 报警 ≥10.75°C · 预警 ≥10.45°C',
+      thresholdNote: SEAL_TEMP_THRESHOLD_NOTE,
     }
   })
 
@@ -218,43 +280,61 @@ export function buildTg04Sensors(roofRadius: number): RoofSensor[] {
     }
   })
 
-  return [...temps, ...levels, ...tilts]
+  const groundRoof: RoofSensor[] = TG04_GROUND_ROOF_LAYOUT.map(({ id, angleDeg, r01 }) =>
+    buildGroundingSensor(id, angleDeg, r01, roofRadius, 'roof'),
+  )
+
+  const groundShell: RoofSensor[] = TG04_GROUND_SHELL_LAYOUT.map(({ id, angleDeg, r01 }) =>
+    buildGroundingSensor(id, angleDeg, r01, roofRadius, 'shell'),
+  )
+
+  return [...temps, ...levels, ...tilts, ...groundRoof, ...groundShell]
 }
 
-function countByStatus(sensors: RoofSensor[], type?: SensorType) {
+function countByStatus(sensors: RoofSensor[], type?: SensorType): SensorSummary {
   const list = type ? sensors.filter((s) => s.type === type) : sensors
   return {
     ok: list.filter((s) => s.status === 'ok').length,
     warn: list.filter((s) => s.status === 'warn').length,
     alarm: list.filter((s) => s.status === 'alarm').length,
+    fire: list.filter((s) => s.status === 'fire').length,
     total: list.length,
   }
+}
+
+function rowStatus(stats: SensorSummary): SensorStatus | 'ok' {
+  if (stats.fire > 0) return 'fire'
+  if (stats.alarm > 0) return 'alarm'
+  if (stats.warn > 0) return 'warn'
+  return 'ok'
 }
 
 function buildInventory(sensors: RoofSensor[]): DeviceInventoryRow[] {
   const t = countByStatus(sensors, 'temperature')
   const l = countByStatus(sensors, 'liquid_level')
   const tilt = countByStatus(sensors, 'tilt')
-  const row = (name: string, count: number, stats: ReturnType<typeof countByStatus>): DeviceInventoryRow => {
-    const status: SensorStatus =
-      stats.alarm > 0 ? 'alarm' : stats.warn > 0 ? 'warn' : 'ok'
+  const g = countByStatus(sensors, 'grounding')
+
+  const row = (name: string, count: number, stats: SensorSummary): DeviceInventoryRow => {
+    const status = rowStatus(stats)
     return {
       name,
       count,
       status,
-      statusLabel: SENSOR_STATUS_LABELS[status],
+      statusLabel: status === 'ok' ? '正常' : SENSOR_STATUS_LABELS[status],
     }
   }
+
   return [
-    row('温度传感器', 34, { ...t, total: 34 }),
-    row('倾角传感器', 8, { ...tilt, total: 8 }),
-    row('翻液传感器', 18, { ...l, total: 18 }),
+    row('密封区温度', t.total, t),
+    row('倾角传感器', tilt.total, tilt),
+    row('翻液传感器', l.total, l),
+    row('静电接地', g.total, g),
     { name: '解调仪', count: 1, status: 'ok', statusLabel: '正常' },
     { name: '显示器', count: 1, status: 'ok', statusLabel: '正常' },
   ]
 }
 
-/** 储罐 ID → 传感套件（T-02 对标 TG04 全量浮盘监测） */
 export const tankSensorSuiteMap: Record<string, FloatingRoofSensorSuite> = {}
 
 export function registerTankSensorSuite(
@@ -285,15 +365,21 @@ export function getSensorById(tankId: string, sensorId: string) {
   return getSensorsForTank(tankId).find((s) => s.id === sensorId) ?? null
 }
 
-export function getSensorSummary(tankId: string) {
+export function getSensorSummary(tankId: string): SensorSummary {
   const sensors = getSensorsForTank(tankId)
   return countByStatus(sensors)
 }
 
-/** 仅用于 3D 点击的屋面测点（温度 18 + 液位 10，与参考图主视觉一致） */
+export function hasFireSensors(tankId: string) {
+  return getSensorsForTank(tankId).some((s) => s.status === 'fire')
+}
+
 export function getRoofMarkersForTank(tankId: string) {
   return getSensorsForTank(tankId).filter(
-    (s) => s.type === 'temperature' || s.type === 'liquid_level',
+    (s) =>
+      s.type === 'temperature' ||
+      s.type === 'liquid_level' ||
+      s.type === 'grounding',
   )
 }
 
@@ -303,17 +389,17 @@ export function getLiveReadingsForTank(tankId: string) {
     temperature: sensors.filter((s) => s.type === 'temperature'),
     liquidLevel: sensors.filter((s) => s.type === 'liquid_level'),
     tilt: sensors.filter((s) => s.type === 'tilt'),
+    grounding: sensors.filter((s) => s.type === 'grounding'),
   }
 }
 
-/** T-01 简化浮盘监测（8 点外环等分，演示全绿） */
 export function buildBasicRoofSensors(roofRadius: number): RoofSensor[] {
   const layout = ringLayout(
     ['T1_1', 'T1_2', 'T1_3', 'T1_4', 'T1_5', 'T1_6', 'T1_7', 'T1_8'],
     ROOF_RING.rim,
     0,
   )
-  return layout.map(({ id, angleDeg, r01 }) => {
+  const temps = layout.map(({ id, angleDeg, r01 }) => {
     const value = 28.4 + (angleDeg % 10) * 0.05
     return {
       id,
@@ -327,6 +413,13 @@ export function buildBasicRoofSensors(roofRadius: number): RoofSensor[] {
       thresholdNote: '罐壁区温度 · 运行正常',
     }
   })
+
+  const groundLayout = ringLayout(['G1_1', 'G1_2', 'G1_3', 'G1_4'], ROOF_RING.inner, 45)
+  const grounding = groundLayout.map(({ id, angleDeg, r01 }) =>
+    buildGroundingSensor(id, angleDeg, r01, roofRadius, 'roof'),
+  )
+
+  return [...temps, ...grounding]
 }
 
 export function initTankSensorSuites(
@@ -343,17 +436,26 @@ export function initTankSensorSuites(
 
 export function getSensorAlertsFromSuite(tankId: string, tankLabel: string) {
   return getSensorsForTank(tankId)
-    .filter((s) => s.status === 'alarm' || s.status === 'warn')
-    .map((s, i) => ({
-      id: `sensor-${tankId}-${s.id}`,
-      time: `14:${String(30 + i).padStart(2, '0')}`,
-      text:
-        s.status === 'alarm'
-          ? `${s.label} ${SENSOR_STATUS_LABELS[s.status]} · 当前 ${s.value}${s.unit}`
-          : `${s.label} ${SENSOR_STATUS_LABELS[s.status]}`,
-      target: tankLabel,
-      sensorId: s.id,
-      sensorLabel: s.label,
-      level: s.status,
-    }))
+    .filter((s) => s.status !== 'ok')
+    .map((s, i) => {
+      const isFire = s.status === 'fire'
+      const isGrounding = s.type === 'grounding'
+      const prefix = isFire ? '密封区火警' : isGrounding ? '静电接地' : s.label
+      const detail =
+        isGrounding && s.connected === false
+          ? '连接断开'
+          : isFire || s.status === 'alarm'
+            ? `当前 ${s.value}${s.unit}`
+            : SENSOR_STATUS_LABELS[s.status]
+
+      return {
+        id: `sensor-${tankId}-${s.id}`,
+        time: `14:${String(38 + i).padStart(2, '0')}`,
+        text: `${prefix} ${detail}`,
+        target: tankLabel,
+        sensorId: s.id,
+        sensorLabel: s.label,
+        level: s.status === 'fire' ? ('fire' as const) : s.status,
+      }
+    })
 }

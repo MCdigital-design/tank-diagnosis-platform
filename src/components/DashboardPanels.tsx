@@ -1,5 +1,9 @@
+import { useMemo } from 'react'
+import { DEMO_MODE_MESSAGE, useDemoNotice } from '../context/DemoNoticeContext'
 import { useTankSelection } from '../context/TankSelectionContext'
-import { HealthDonut, UtilizationGauge } from './Charts'
+import { sortAlerts } from '../data/alertUtils'
+import { ROOF_PHASE_COLORS, ROOF_PHASE_LABELS } from '../data/floatingRoofState'
+import { HealthDonut, RoofHeightChart, UtilizationGauge } from './Charts'
 import { Panel } from './Panel'
 import {
   SENSOR_STATUS_COLORS,
@@ -28,6 +32,7 @@ function useDashboardFocus() {
     activeSensorId,
     relatedAlerts,
     relatedDiagnostics,
+    roofTravel,
     selectTank,
     selectSensor,
   } = useTankSelection()
@@ -42,6 +47,7 @@ function useDashboardFocus() {
     activeSensorId,
     relatedAlerts,
     relatedDiagnostics,
+    roofTravel,
     selectTank,
     selectSensor,
     alertIds,
@@ -50,8 +56,15 @@ function useDashboardFocus() {
   }
 }
 
+function findTankByAlertTarget(target: string) {
+  return tanks3D.find(
+    (t) => target === t.label || t.alertKeys.some((k) => target.includes(k)),
+  )
+}
+
 export function DashboardLeft() {
-  const { activeTank, activeTankId, diagnosticNames, sensorSuite } = useDashboardFocus()
+  const { activeTank, activeTankId, diagnosticNames, sensorSuite, roofTravel } =
+    useDashboardFocus()
 
   return (
     <aside className="col col--left">
@@ -87,6 +100,13 @@ export function DashboardLeft() {
 
       <Panel title="罐区利用率">
         <UtilizationGauge highlightPercent={activeTank?.level} />
+        {activeTank ? (
+          <p className="util-text util-text__gauge-hint">
+            仪表盘显示：<strong>{activeTank.label}</strong> 液位 {activeTank.level}%（选中罐）
+          </p>
+        ) : (
+          <p className="util-text util-text__gauge-hint">仪表盘显示：罐区综合利用率</p>
+        )}
         <p className="util-text">
           已用 <strong>{utilization.used.toLocaleString()}</strong> m³ / 总容量{' '}
           <strong>{utilization.capacity.toLocaleString()}</strong> m³
@@ -101,6 +121,40 @@ export function DashboardLeft() {
           )}
         </p>
       </Panel>
+
+      {activeTank && roofTravel && (
+        <Panel title="浮盘行程" className="panel--focused panel--roof-travel">
+          <div
+            className={`roof-travel-badge ${roofTravel.phase === 'landed' ? 'roof-phase--landed' : ''}`}
+            style={{ borderColor: ROOF_PHASE_COLORS[roofTravel.phase] }}
+          >
+            <span
+              className="roof-travel-badge__dot"
+              style={{ background: ROOF_PHASE_COLORS[roofTravel.phase] }}
+            />
+            <strong>{ROOF_PHASE_LABELS[roofTravel.phase]}</strong>
+          </div>
+          <dl className="roof-travel-metrics">
+            <div>
+              <dt>当前高度</dt>
+              <dd>{roofTravel.roofHeight} m</dd>
+            </div>
+            <div>
+              <dt>升降速率</dt>
+              <dd>{roofTravel.travelRate} mm/min</dd>
+            </div>
+            <div>
+              <dt>距高限</dt>
+              <dd>{(roofTravel.highLimit - roofTravel.roofHeight).toFixed(2)} m</dd>
+            </div>
+            <div>
+              <dt>距低限</dt>
+              <dd>{(roofTravel.roofHeight - roofTravel.lowLimit).toFixed(2)} m</dd>
+            </div>
+          </dl>
+          <RoofHeightChart points={roofTravel.heightSeries} />
+        </Panel>
+      )}
 
       {activeTank && sensorSuite && (
         <Panel title="浮盘设备信息" className="panel--focused">
@@ -166,6 +220,8 @@ export function DashboardRight() {
     selectSensor,
     alertIds,
   } = useDashboardFocus()
+  const { showDemoNotice } = useDemoNotice()
+  const sortedAlerts = useMemo(() => sortAlerts(alerts), [])
 
   return (
     <aside className="col col--right">
@@ -186,8 +242,8 @@ export function DashboardRight() {
           <button
             type="button"
             className="mini-map__pin mini-map__pin--7"
-            title="储罐07（未在 3D 场景中）"
-            disabled
+            title="储罐07：仅总览标注，暂无 3D 演示（演示范围 T-01 / T-02）"
+            onClick={() => showDemoNotice('演示范围仅包含 储罐01、储罐02 的 3D 与浮盘传感')}
           >
             T-07
           </button>
@@ -196,27 +252,36 @@ export function DashboardRight() {
 
       <Panel title="告警与通知">
         <ul className="alert-list">
-          {alerts.map((a) => {
+          {sortedAlerts.map((a) => {
             const linked = alertIds.has(a.id)
-            const canJump = linked && !!a.sensorId && !!activeTankId
+            const travelTank = a.travelPhase ? findTankByAlertTarget(a.target) : undefined
+            const canJumpSensor = linked && !!a.sensorId && !!activeTankId
+            const canJumpTravel = linked && !!a.travelPhase && !!travelTank
+            const label = `${a.text}（${a.target}）`
             return (
               <li
                 key={a.id}
                 className={`alert-list__item ${linked ? 'alert-list__item--linked' : ''} ${a.level ? `alert-list__item--${a.level}` : ''}`}
               >
                 <time>{a.time}</time>
-                {canJump ? (
+                {canJumpSensor ? (
                   <button
                     type="button"
                     className="alert-list__jump"
                     onClick={() => selectSensor(a.sensorId!)}
                   >
-                    {a.text}（{a.target}）
+                    {label}
+                  </button>
+                ) : canJumpTravel ? (
+                  <button
+                    type="button"
+                    className="alert-list__jump"
+                    onClick={() => selectTank(travelTank!.id)}
+                  >
+                    {label}
                   </button>
                 ) : (
-                  <span>
-                    {a.text}（{a.target}）
-                  </span>
+                  <span>{label}</span>
                 )}
               </li>
             )
@@ -244,9 +309,16 @@ export function DashboardRight() {
       </Panel>
 
       <Panel title="快捷操作">
+        <p className="panel-focus-line panel-focus-line--dim">演示模式 · 以下为占位入口</p>
         <div className="quick-btns">
           {quickActions.map((label) => (
-            <button key={label} type="button" className="quick-btn">
+            <button
+              key={label}
+              type="button"
+              className="quick-btn quick-btn--demo"
+              title={DEMO_MODE_MESSAGE}
+              onClick={() => showDemoNotice(`${label}：${DEMO_MODE_MESSAGE}`)}
+            >
               {label}
             </button>
           ))}
@@ -290,11 +362,37 @@ function FloatingRoofReadings({ tankId }: { tankId: string }) {
     </div>
   )
 
+  const renderGrounding = () => (
+    <div className="roof-readings__group">
+      <h4>
+        静电接地
+      </h4>
+      <ul>
+        {live.grounding.map((s) => (
+          <li key={s.id}>
+            <button
+              type="button"
+              className={`roof-readings__cell roof-readings__cell--${s.status} ${activeSensorId === s.id ? 'roof-readings__cell--active' : ''}`}
+              onClick={() => selectSensor(s.id)}
+            >
+              <span>{s.label}</span>
+              <strong style={{ color: SENSOR_STATUS_COLORS[s.status] }}>
+                {s.connected ? '正常' : '断开'}
+              </strong>
+              <em>{SENSOR_STATUS_LABELS[s.status]}</em>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+
   return (
     <div className="roof-readings">
-      {renderGroup('温度', '°C', live.temperature)}
+      {renderGroup('密封区温度', '°C', live.temperature)}
       {renderGroup('液位', 'mm', live.liquidLevel)}
       {renderGroup('倾角', '°', live.tilt)}
+      {live.grounding.length > 0 && renderGrounding()}
     </div>
   )
 }

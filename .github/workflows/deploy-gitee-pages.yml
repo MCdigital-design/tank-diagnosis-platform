@@ -1,0 +1,42 @@
+name: Deploy Gitee Pages
+
+on:
+  workflow_dispatch:
+    inputs:
+      label:
+        description: '发布说明（如 v1.2.0 内部演示）'
+        required: false
+        default: 'preview'
+  push:
+    tags:
+      - 'preview-*'
+
+jobs:
+  build-push-gitee:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+        env:
+          VITE_BASE_PATH: /
+      - name: Push dist to Gitee Pages branch
+        env:
+          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+          GITEE_REPO: ${{ secrets.GITEE_REPO }}
+        run: |
+          if [ -z "$GITEE_TOKEN" ] || [ -z "$GITEE_REPO" ]; then
+            echo "::error::Add GITEE_TOKEN and GITEE_REPO in GitHub repo Secrets (Settings → Secrets → Actions)."
+            exit 1
+          fi
+          cd dist
+          git init
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add -A
+          git commit -m "deploy: ${{ github.sha }} ${{ github.event.inputs.label || github.ref_name }}"
+          git push -f "https://oauth2:${GITEE_TOKEN}@gitee.com/${GITEE_REPO}.git" HEAD:pages

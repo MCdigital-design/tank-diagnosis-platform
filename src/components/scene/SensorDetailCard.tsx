@@ -6,9 +6,10 @@ import {
 import { SensorTimeSeriesChart } from '../Charts'
 
 const TYPE_LABELS = {
-  temperature: '温度传感器',
+  temperature: '密封区温度',
   liquid_level: '翻液/液位传感器',
   tilt: '倾角传感器',
+  grounding: '静电接地',
 } as const
 
 type Props = {
@@ -40,17 +41,36 @@ export function SensorDetailCard({ sensor, referenceTankCode, onClose }: Props) 
           className="sensor-detail-card__status-dot"
           style={{ background: SENSOR_STATUS_COLORS[sensor.status] }}
         />
-        <strong>
-          {sensor.value}
-          {sensor.unit}
-        </strong>
+        {sensor.type === 'grounding' ? (
+          <strong>{sensor.connected ? '连接正常' : '连接断开'}</strong>
+        ) : (
+          <strong>
+            {sensor.value}
+            {sensor.unit}
+          </strong>
+        )}
         <span className={`sensor-detail-card__badge sensor-detail-card__badge--${sensor.status}`}>
           {SENSOR_STATUS_LABELS[sensor.status]}
         </span>
       </div>
       <p className="sensor-detail-card__threshold">{sensor.thresholdNote}</p>
-      <SensorTimeSeriesChart points={sensor.timeSeries} unit={sensor.unit} status={sensor.status} />
-      <p className="sensor-detail-card__hint">近 24 小时趋势 · 与解调仪/上位机时序一致（演示数据）</p>
+      {sensor.type === 'grounding' && sensor.statusEvents ? (
+        <ul className="sensor-detail-card__events">
+          {sensor.statusEvents.slice(-8).reverse().map((ev) => (
+            <li key={ev.time} className={ev.connected ? '' : 'sensor-detail-card__events--fault'}>
+              <time>{ev.time}</time>
+              <span>{ev.connected ? '连接正常' : '连接断开'}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <SensorTimeSeriesChart points={sensor.timeSeries} unit={sensor.unit} status={sensor.status} />
+      )}
+      <p className="sensor-detail-card__hint">
+        {sensor.type === 'grounding'
+          ? '状态变化记录 · 演示数据'
+          : '近 24 小时趋势 · 与解调仪/上位机时序一致（演示数据）'}
+      </p>
     </div>
   )
 }

@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
+import { DemoBanner } from './components/DemoBanner'
+import { DemoModal } from './components/DemoModal'
 import { FontSizeControl } from './components/FontSizeControl'
 import { DashboardFooter, DashboardLeft, DashboardRight } from './components/DashboardPanels'
 import { TankScene3D } from './components/scene/TankScene3D'
+import { DEMO_MODE_MESSAGE, useDemoNotice } from './context/DemoNoticeContext'
 import { DESIGN_HEIGHT, DESIGN_WIDTH, useViewportScale } from './hooks/useViewportScale'
 import { navItems, siteInfo } from './data/mock'
 
@@ -12,7 +15,9 @@ function formatDateTime(d: Date) {
 
 export default function App() {
   const [now, setNow] = useState(() => formatDateTime(new Date()))
+  const [emergencyOpen, setEmergencyOpen] = useState(false)
   const scale = useViewportScale()
+  const { showDemoNotice } = useDemoNotice()
 
   useEffect(() => {
     const t = setInterval(() => setNow(formatDateTime(new Date())), 1000)
@@ -41,6 +46,8 @@ export default function App() {
           }}
         >
           <div className="dashboard__grid-bg" aria-hidden />
+
+          <DemoBanner />
 
           <header className="header">
             <div className="header__left">
@@ -76,17 +83,32 @@ export default function App() {
               <button
                 key={item.id}
                 type="button"
-                className={`nav__item ${item.active ? 'nav__item--active' : ''}`}
+                className={`nav__item nav__item--demo ${item.active ? 'nav__item--active' : ''}`}
+                title={item.active ? '当前总览页（演示）' : DEMO_MODE_MESSAGE}
+                onClick={() => {
+                  if (!item.active) showDemoNotice(DEMO_MODE_MESSAGE)
+                }}
               >
                 {item.label}
               </button>
             ))}
-            <button type="button" className="nav__emergency">
+            <button
+              type="button"
+              className="nav__emergency"
+              title="演示：应急广播流程"
+              onClick={() => setEmergencyOpen(true)}
+            >
               应急广播
             </button>
           </nav>
         </div>
       </div>
+
+      <DemoModal open={emergencyOpen} title="应急广播（演示）" onClose={() => setEmergencyOpen(false)}>
+        <p>当前为<strong>内部演示版本</strong>，应急广播尚未接入真实调度与通知系统。</p>
+        <p>正式版本将支持：一键广播、预案联动、值班确认与记录归档。</p>
+        <p className="demo-modal__note">演示数据不代表现场告警状态，请勿用于真实应急决策。</p>
+      </DemoModal>
     </div>
   )
 }

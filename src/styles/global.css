@@ -1302,6 +1302,328 @@ body {
   filter: brightness(1.1);
 }
 
+/* Demo / preview (P0–P1) */
+.demo-banner {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 180, 60, 0.45);
+  border-radius: 4px;
+  background: linear-gradient(90deg, rgba(80, 50, 10, 0.55), rgba(40, 28, 8, 0.4));
+  font-size: 0.78rem;
+  color: #f5d9a8;
+}
+
+.demo-banner__badge {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #1a1206;
+  border-radius: 3px;
+  background: #f0b429;
+}
+
+.demo-banner__text {
+  line-height: 1.35;
+}
+
+.demo-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 72px;
+  z-index: 9999;
+  max-width: min(520px, 92vw);
+  padding: 12px 18px;
+  font-size: 0.88rem;
+  color: #e8f4ff;
+  text-align: center;
+  border: 1px solid var(--border-glow);
+  border-radius: 6px;
+  background: rgba(8, 28, 58, 0.96);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  transform: translateX(-50%);
+  pointer-events: none;
+  animation: demo-toast-in 0.25s ease;
+}
+
+@keyframes demo-toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.demo-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.demo-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  background: rgba(2, 8, 18, 0.72);
+  cursor: pointer;
+}
+
+.demo-modal__panel {
+  position: relative;
+  z-index: 1;
+  width: min(480px, 100%);
+  border: 1px solid var(--border-glow);
+  border-radius: 6px;
+  background: linear-gradient(180deg, rgba(14, 42, 82, 0.98), rgba(8, 22, 48, 0.98));
+  box-shadow: 0 0 40px rgba(30, 120, 255, 0.2);
+}
+
+.demo-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(40, 100, 180, 0.35);
+}
+
+.demo-modal__head h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #7dd3fc;
+}
+
+.demo-modal__close {
+  padding: 4px 10px;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--text-dim);
+  cursor: pointer;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+}
+
+.demo-modal__close:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.demo-modal__body {
+  padding: 16px 18px 20px;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+
+.demo-modal__body p {
+  margin: 0 0 10px;
+}
+
+.demo-modal__body p:last-child {
+  margin-bottom: 0;
+}
+
+.demo-modal__note {
+  margin-top: 12px !important;
+  padding-top: 10px;
+  font-size: 0.8rem;
+  color: #f0b429;
+  border-top: 1px dashed rgba(240, 180, 41, 0.35);
+}
+
+.scene__webgl-fallback {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  height: 100%;
+  min-height: 320px;
+  padding: 24px 28px;
+  text-align: left;
+  border: 1px dashed rgba(255, 100, 80, 0.45);
+  border-radius: 4px;
+  background: rgba(20, 12, 12, 0.65);
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.scene__webgl-fallback strong {
+  font-size: 1rem;
+  color: #fca5a5;
+}
+
+.util-text__gauge-hint {
+  margin-bottom: 4px;
+  font-size: 0.75rem;
+  color: #7dd3fc;
+}
+
+.panel-focus-line--dim {
+  margin-bottom: 8px;
+  font-size: 0.72rem;
+  opacity: 0.85;
+}
+
+/* Tier 1 — 浮盘行程 / 火警 / 接地 */
+.tank-id-card__fire-banner {
+  margin: 6px 0;
+  padding: 8px 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #fff;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #b91c1c, #7f1d1d);
+  box-shadow: 0 0 16px rgba(185, 28, 28, 0.45);
+  animation: fire-banner-pulse 2s ease-in-out infinite;
+}
+
+@keyframes fire-banner-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.88;
+  }
+}
+
+.tank-id-card__roof-phase {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+  padding: 6px 8px;
+  font-size: 0.68rem;
+  border: 1px solid;
+  border-radius: 3px;
+  background: rgba(8, 28, 58, 0.5);
+}
+
+.tank-id-card__roof-phase-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tank-id-card__roof-phase-meta {
+  color: var(--text-dim);
+  font-size: 0.62rem;
+}
+
+.roof-phase--landed {
+  animation: landed-blink 1.2s ease-in-out infinite;
+}
+
+@keyframes landed-blink {
+  0%,
+  100% {
+    box-shadow: 0 0 0 rgba(185, 28, 28, 0);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(185, 28, 28, 0.65);
+  }
+}
+
+.traffic-lights__item--fire {
+  background: rgba(185, 28, 28, 0.25);
+  color: #fca5a5;
+}
+
+.device-inv__status--fire {
+  color: #fca5a5 !important;
+}
+
+.sensor-pick--fire {
+  border-color: rgba(185, 28, 28, 0.55);
+}
+
+.alert-list__item--fire .alert-list__jump,
+.alert-list__item--fire span {
+  color: #fca5a5;
+  font-weight: 600;
+}
+
+.roof-travel-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  border: 1px solid;
+  border-radius: 3px;
+}
+
+.roof-travel-badge__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.roof-travel-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 10px;
+  margin-bottom: 8px;
+  font-size: 0.72rem;
+}
+
+.roof-travel-metrics dt {
+  color: var(--text-dim);
+}
+
+.roof-travel-metrics dd {
+  margin: 0;
+  color: #fff;
+  font-family: var(--font-num);
+}
+
+.roof-height-chart {
+  width: 100%;
+  height: 72px;
+}
+
+.sensor-detail-card__events {
+  list-style: none;
+  margin: 8px 0;
+  padding: 0;
+  font-size: 0.68rem;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.sensor-detail-card__events li {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(56, 120, 200, 0.15);
+  color: var(--text-dim);
+}
+
+.sensor-detail-card__events--fault {
+  color: #ff8fa3;
+}
+
+.sensor-detail-card--fire {
+  border-color: rgba(185, 28, 28, 0.6);
+}
+
 @media (max-width: 1280px) {
   .main {
     grid-template-columns: 240px 1fr 220px;

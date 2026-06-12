@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>储罐运行诊断指挥平台</title>
+    <script>
+      // GitHub Pages SPA fallback: redirect to index with path preserved
+      ;(function () {
+        var segment = 1
+        var parts = location.pathname.split('/').filter(Boolean)
+        if (parts.length > 0 && parts[0].indexOf('.') === -1) segment = 1
+        var base = parts.slice(0, segment).join('/')
+        var rest = parts.slice(segment).join('/')
+        var target =
+          (base ? '/' + base : '') +
+          '/?p=' +
+          encodeURIComponent('/' + rest + location.search + location.hash)
+        location.replace(target)
+      })()
+    </script>
+  </head>
+  <body></body>
+</html>

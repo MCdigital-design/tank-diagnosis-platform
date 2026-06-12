@@ -1,14 +1,15 @@
 import { useCallback, useRef, useState } from 'react'
-import { Canvas, type ThreeEvent } from '@react-three/fiber'
+import type { ThreeEvent } from '@react-three/fiber'
 import { Grid, OrbitControls, useCursor } from '@react-three/drei'
 import { useTankSelection } from '../../context/TankSelectionContext'
 import { tanks3D } from '../../data/mock'
-import { scaledCanvasEvents } from './scaledCanvasEvents'
 import { SceneSelectionLink, type SceneSelectionLinkHandle } from './SceneSelectionLink'
 import { RoofSensorMarkers } from './RoofSensorMarkers'
+import { RoofTravelGauge } from './RoofTravelGauge'
 import { SensorDetailCard } from './SensorDetailCard'
 import { TankIdCard } from './TankIdCard'
 import { TankRoofProjector } from './TankRoofProjector'
+import { SceneCanvas } from './SceneCanvas'
 import { useSelectionLinkLoop } from './useSelectionLinkLoop'
 
 const noopRaycast = () => null
@@ -154,6 +155,7 @@ function Scene({ activeTankId, activeSensorId, onSelectTank, onSelectSensor }: S
 
       {activeTankId && (
         <>
+          <RoofTravelGauge tankId={activeTankId} />
           <RoofSensorMarkers
             tankId={activeTankId}
             activeSensorId={activeSensorId}
@@ -174,6 +176,7 @@ export function TankScene3D() {
     activeSensorId,
     sensorSuite,
     sensorSummary,
+    roofTravel,
     pinned,
     selectTank,
     selectSensor,
@@ -200,16 +203,17 @@ export function TankScene3D() {
   return (
     <div className="scene scene--interactive">
       <p className="scene__hint">
-        拖拽旋转 · 滚轮缩放 · 点击储罐打开信息卡 · 选中罐后点击浮盘测点查看时序
+        3D 演示罐：<strong>储罐01、储罐02</strong>（T-07 等仅在总览标注）· 拖拽旋转 · 滚轮缩放 ·
+        点击储罐打开信息卡 · 侧栏为浮盘行程标尺 · 方点=静电接地
         {pinned ? ' · 已固定' : ' · 空白处先关测点再关罐'}
       </p>
       <div className="scene__viewport" ref={viewportRef}>
-        <Canvas
-          events={scaledCanvasEvents}
-          camera={{ position: [9, 5.5, 11], fov: 48, near: 0.1, far: 200 }}
-          gl={{ antialias: true, alpha: false }}
+        <SceneCanvas
           onPointerMissed={() => dismissInteraction()}
-          style={{ background: '#0a1420' }}
+          canvasProps={{
+            camera: { position: [9, 5.5, 11], fov: 48, near: 0.1, far: 200 },
+            style: { background: '#0a1420' },
+          }}
         >
           <Scene
             activeTankId={activeTankId}
@@ -217,7 +221,7 @@ export function TankScene3D() {
             onSelectTank={selectTank}
             onSelectSensor={selectSensor}
           />
-        </Canvas>
+        </SceneCanvas>
 
         {activeTank && <SceneSelectionLink onReady={attachLinkPainter} />}
 
@@ -233,6 +237,7 @@ export function TankScene3D() {
                   pinned={pinned}
                   sensorSuite={sensorSuite}
                   sensorSummary={sensorSummary}
+                  roofTravel={roofTravel}
                   activeSensorId={activeSensorId}
                   onPinToggle={togglePin}
                   onClose={clearTank}
@@ -262,7 +267,9 @@ export function TankScene3D() {
             </span>
           </>
         ) : (
-          <span>将鼠标移到储罐上会高亮，点击圆柱体打开信息卡</span>
+          <span>
+            将鼠标移到储罐01/02上会高亮，点击圆柱体打开信息卡（其他罐号见右侧总览）
+          </span>
         )}
       </div>
     </div>

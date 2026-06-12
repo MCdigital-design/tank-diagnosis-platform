@@ -10,6 +10,7 @@ export function UtilizationGauge({ highlightPercent }: { highlightPercent?: numb
   useEffect(() => {
     if (!ref.current) return
     const chart = echarts.init(ref.current)
+    const percent = highlightPercent ?? utilization.percent
     chart.setOption({
       series: [
         {
@@ -42,7 +43,7 @@ export function UtilizationGauge({ highlightPercent }: { highlightPercent?: numb
             fontWeight: 700,
             offsetCenter: [0, '0%'],
           },
-          data: [{ value: utilization.percent }],
+          data: [{ value: percent }],
         },
       ],
     })
@@ -151,11 +152,13 @@ export function SensorTimeSeriesChart({
               {
                 offset: 0,
                 color:
-                  status === 'alarm'
-                    ? 'rgba(255,77,109,0.35)'
-                    : status === 'warn'
-                      ? 'rgba(255,179,71,0.35)'
-                      : 'rgba(0,229,160,0.35)',
+                  status === 'fire'
+                    ? 'rgba(185,28,28,0.45)'
+                    : status === 'alarm'
+                      ? 'rgba(255,77,109,0.35)'
+                      : status === 'warn'
+                        ? 'rgba(255,179,71,0.35)'
+                        : 'rgba(0,229,160,0.35)',
               },
               { offset: 1, color: 'rgba(0,0,0,0)' },
             ]),
@@ -172,4 +175,60 @@ export function SensorTimeSeriesChart({
   }, [points, unit, status])
 
   return <div className="sensor-ts-chart" ref={ref} />
+}
+
+export function RoofHeightChart({ points }: { points: SensorTimePoint[] }) {
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!ref.current) return
+    const chart = echarts.init(ref.current)
+    chart.setOption({
+      grid: { left: 32, right: 8, top: 8, bottom: 18 },
+      tooltip: {
+        trigger: 'axis',
+        formatter: (params: unknown) => {
+          const p = (params as { dataIndex: number }[])[0]
+          if (!p) return ''
+          const pt = points[p.dataIndex]
+          return `${pt.time}<br/>${pt.value} m`
+        },
+      },
+      xAxis: {
+        type: 'category',
+        data: points.map((p) => p.time),
+        axisLabel: { color: '#6a8aaa', fontSize: 8, interval: 5 },
+        axisLine: { lineStyle: { color: 'rgba(56,120,200,0.35)' } },
+      },
+      yAxis: {
+        type: 'value',
+        scale: true,
+        axisLabel: { color: '#6a8aaa', fontSize: 8 },
+        splitLine: { lineStyle: { color: 'rgba(30,70,120,0.25)' } },
+      },
+      series: [
+        {
+          type: 'line',
+          smooth: true,
+          symbol: 'none',
+          data: points.map((p) => p.value),
+          lineStyle: { color: '#7dd3fc', width: 2 },
+          areaStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: 'rgba(125,211,252,0.3)' },
+              { offset: 1, color: 'rgba(0,0,0,0)' },
+            ]),
+          },
+        },
+      ],
+    })
+    const onResize = () => chart.resize()
+    window.addEventListener('resize', onResize)
+    return () => {
+      window.removeEventListener('resize', onResize)
+      chart.dispose()
+    }
+  }, [points])
+
+  return <div className="roof-height-chart" ref={ref} />
 }

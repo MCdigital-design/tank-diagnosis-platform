@@ -35,6 +35,7 @@ export const todaySummary = [
   { label: '综合健康', value: '89', unit: '/100' },
 ]
 
+import { initFloatingRoofTravel } from './floatingRoofState'
 import { initTankSensorSuites } from './floatingRoofSensors'
 
 export type Tank3DData = {
@@ -116,10 +117,35 @@ export type AlertItem = {
   text: string
   target: string
   sensorId?: string
-  level?: 'ok' | 'warn' | 'alarm'
+  level?: 'ok' | 'warn' | 'alarm' | 'fire'
+  travelPhase?: string
 }
 
 export const alerts: AlertItem[] = [
+  {
+    id: 'a-fire',
+    time: '14:40',
+    text: '密封区火警 T4_1 · 当前 11.24°C',
+    target: '储罐02',
+    sensorId: 'T4_1',
+    level: 'fire',
+  },
+  {
+    id: 'a-roof-near',
+    time: '14:39',
+    text: '浮盘行程接近高限 · 高度 4.14m',
+    target: '储罐02',
+    level: 'warn',
+    travelPhase: 'near_high',
+  },
+  {
+    id: 'a-ground',
+    time: '14:38',
+    text: '静电接地 G4_2 连接断开',
+    target: '储罐02',
+    sensorId: 'G4_2',
+    level: 'alarm',
+  },
   { id: 'a1', time: '14:32', text: '浮盘位移预警', target: '储罐07' },
   { id: 'a2', time: '14:21', text: '静电风险提示', target: '储罐03' },
   {
@@ -131,17 +157,9 @@ export const alerts: AlertItem[] = [
   },
   { id: 'a4', time: '14:10', text: '防腐巡检计划', target: '泵组02' },
   {
-    id: 'a5',
-    time: '14:36',
-    text: '浮盘温度 T4_1 超限报警',
-    target: '储罐02',
-    sensorId: 'T4_1',
-    level: 'alarm',
-  },
-  {
     id: 'a6',
     time: '14:35',
-    text: '浮盘温度 T4_3 超限报警',
+    text: '密封区温度 T4_3 超限报警',
     target: '储罐02',
     sensorId: 'T4_3',
     level: 'alarm',
@@ -149,20 +167,22 @@ export const alerts: AlertItem[] = [
   {
     id: 'a7',
     time: '14:34',
-    text: '浮盘温度 T4_4 温度预警',
+    text: '密封区温度 T4_4 温度预警',
     target: '储罐02',
     sensorId: 'T4_4',
     level: 'warn',
   },
 ]
 
-initTankSensorSuites(
-  tanks3D.map((t) => ({
-    id: t.id,
-    radius: t.radius,
-    referenceCode: t.referenceTankCode,
-  })),
-)
+const tankInitPayload = tanks3D.map((t) => ({
+  id: t.id,
+  radius: t.radius,
+  height: t.height,
+  referenceCode: t.referenceTankCode,
+}))
+
+initTankSensorSuites(tankInitPayload)
+initFloatingRoofTravel(tankInitPayload)
 
 export function getTankById(id: string) {
   return tanks3D.find((t) => t.id === id)
