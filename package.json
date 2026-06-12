@@ -5,11 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:preview": "cross-env VITE_PREVIEW_AUTH=true VITE_PREVIEW_USER=Z-Float VITE_PREVIEW_PASS=008AAA vite",
     "dev:bg": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/start-dev.ps1",
     "dev:stop": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/stop-dev.ps1",
     "start": "npm run dev:bg",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "build:preview": "tsc -b && cross-env VITE_PREVIEW_AUTH=true VITE_PREVIEW_USER=Z-Float VITE_PREVIEW_PASS=008AAA VITE_BASE_PATH=/ vite build",
+    "preview": "vite preview",
+    "preview:dist": "npm run build:preview && vite preview"
   },
   "dependencies": {
     "@fontsource/noto-sans-sc": "^5.2.9",
@@ -27,6 +30,7 @@
     "@types/react-dom": "^18.3.1",
     "@types/three": "^0.184.1",
     "@vitejs/plugin-react": "^4.3.3",
+    "cross-env": "^7.0.3",
     "typescript": "^5.6.3",
     "vite": "^5.4.10"
   }

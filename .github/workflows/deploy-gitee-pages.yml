@@ -24,6 +24,9 @@ jobs:
       - run: npm run build
         env:
           VITE_BASE_PATH: /
+          VITE_PREVIEW_AUTH: 'true'
+          VITE_PREVIEW_USER: ${{ secrets.PREVIEW_USER }}
+          VITE_PREVIEW_PASS: ${{ secrets.PREVIEW_PASS }}
       - name: Push dist to Gitee Pages branch
         env:
           GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}

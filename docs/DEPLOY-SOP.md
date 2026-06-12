@@ -1,7 +1,7 @@
-# 部署与协作 SOP — GitHub · Cloud Agent · Gitee Pages
+# 部署与协作 SOP — GitHub · Cloud Agent · 大陆预览
 
-> **储罐运行诊断指挥平台** 推荐工作流：在 **GitHub** 上开发与使用 Cursor Cloud Agent，用 **GitHub Pages** 做移动端快速预览，在里程碑节点发布到 **Gitee Pages** 供大陆评审访问。  
-> 静态构建说明见 [`PREVIEW-DEPLOY.md`](./PREVIEW-DEPLOY.md)。
+> **储罐运行诊断指挥平台** 推荐工作流：在 **GitHub** 上开发与使用 Cursor Cloud Agent；里程碑节点用 **腾讯云 COS**（首选）发布带登录门的预览包供大陆评审访问。  
+> 静态构建与登录说明见 [`PREVIEW-DEPLOY.md`](./PREVIEW-DEPLOY.md)；快速清单见 [`SETUP-PREVIEW.md`](./SETUP-PREVIEW.md)。
 
 ---
 
@@ -11,14 +11,14 @@
 |------|------|
 | 开发效率最高 | 本地 `npm run dev:bg` 为主；Cloud Agent 在 GitHub 上改代码 |
 | 自己随时用手机看一眼 | 合并到 `main` 后自动部署 **GitHub Pages** |
-| 大陆同事稳定访问 | 仅在「可展示」节点手动发布 **Gitee Pages** |
+| 大陆同事稳定访问 | 仅在「可展示」节点手动发布 **COS 预览**（`build:preview` + 登录门） |
 | 不把托管站当开发环境 | 托管站只是 `dist/` 快照；迭代在本地 / GitHub 完成 |
 
 **两条独立管道（勿混淆）：**
 
 ```
 管道 A — 源码与 Agent：GitHub（或 GitLab）←→ Cursor Cloud Agent
-管道 B — 静态预览分发：npm run build → dist/ → GitHub Pages / Gitee Pages
+管道 B — 静态预览分发：npm run build:preview → dist/ → COS / Nginx / Gitee（备选）
 ```
 
 Cursor Cloud Agent **仅**通过 GitHub（或 GitLab）应用克隆与推送代码；**不能**像连 GitHub 一样直连 Gitee 仓库。Gitee 通过 **CI 脚本** 接收构建产物。
@@ -40,18 +40,20 @@ flowchart LR
   subgraph ci [GitHub Actions]
     Build[npm ci + npm run build]
     GHP[部署 GitHub Pages]
+    COSPush[上传 dist 到 COS]
     GiteePush[推送 dist 到 Gitee]
     GH -->|push main| Build
     Build --> GHP
-    GH -->|手动 / 打 tag| Build
+    GH -->|手动 workflow| Build
+    Build --> COSPush
     Build --> GiteePush
   end
 
   subgraph preview [预览受众]
     Mobile[本人手机 · GitHub Pages]
-    CN[大陆评审 · Gitee Pages]
+    CN[大陆评审 · COS 静态站]
     GHP --> Mobile
-    GiteePush --> CN
+    COSPush --> CN
   end
 ```
 
@@ -64,7 +66,8 @@ flowchart LR
 | **GitHub** | 唯一源码真相源 | Cloud Agent、PR、版本标签 | 持续 |
 | **本地** | 工作副本 | HMR 开发、`npm run build` 自测 | 每日 |
 | **GitHub Pages** | 托管 `dist/` | 移动端 / 海外快速预览 | `main` 每次合并（自动） |
-| **Gitee Pages** | 托管 `dist/` | 大陆内部演示链接 | 里程碑（手动触发） |
+| **腾讯云 COS** | 托管 `dist/` | 大陆内部演示链接（首选） | 里程碑（手动 workflow） |
+| **Gitee Pages** | 托管 `dist/` | 大陆备选（若服务可用） | 里程碑（手动触发） |
 
 ---
 
@@ -78,22 +81,39 @@ flowchart LR
 - [ ] 在 [Cursor Integrations](https://cursor.com/dashboard) 安装 **Cursor GitHub App**，授予该仓库读写权限
 - [ ] 确认已订阅支持 **Cloud Agents** 的计划（见 [Cloud Agent 文档](https://cursor.com/docs/cloud-agent)）
 
-### 4.2 Gitee 预览仓库
+### 4.2 腾讯云 COS 预览桶（大陆首选）
 
-- [ ] 在 Gitee 创建同名或专用预览仓库（可与 GitHub 源码仓库分离，仅存放 Pages 分支）
-- [ ] 开启 **Gitee Pages**（记录服务分支名，常见为 `pages` 或仓库默认分支下的静态目录）
-- [ ] 生成 Gitee **私人令牌**（需仓库写入权限）
+- [ ] 创建 COS 存储桶（公有读私有写 + **静态网站**）
+- [ ] 记录 `COS_BUCKET`、`COS_REGION`
+- [ ] 在访问管理创建 API 密钥（`COS_SECRET_ID` / `COS_SECRET_KEY`）
 
-### 4.3 GitHub Actions 密钥
+### 4.3 Gitee 预览仓库（备选）
+
+- [ ] 确认个人账号仍可使用 **Gitee Pages**
+- [ ] 创建预览仓库并生成 **私人令牌**
+
+### 4.4 GitHub Actions 密钥
 
 在 GitHub 仓库 **Settings → Secrets and variables → Actions** 添加：
 
 | Secret 名称 | 说明 |
 |-------------|------|
-| `GITEE_TOKEN` | Gitee 私人令牌 |
-| `GITEE_REPO` | 目标仓库，如 `your-org/tank-diagnosis-platform` |
+| `PREVIEW_USER` | 预览登录用户名（如 `Z-Float`） |
+| `PREVIEW_PASS` | 预览登录密码 |
+| `COS_SECRET_ID` | 腾讯云 API 密钥 ID |
+| `COS_SECRET_KEY` | 腾讯云 API 密钥 Key |
+| `COS_BUCKET` | COS 存储桶名称 |
+| `COS_REGION` | 地域，如 `ap-guangzhou` |
+| `GITEE_TOKEN` | （备选）Gitee 私人令牌 |
+| `GITEE_REPO` | （备选）`用户名/tank-diagnosis-platform` |
 
-### 4.4 Vite 公共路径（`base`）
+### 4.5 预览登录
+
+- 本地 `npm run dev:bg`：**不启用**登录（`VITE_PREVIEW_AUTH` 未设置）
+- `npm run build:preview` 与部署 CI：**启用**登录门
+- 凭证通过 Secrets 注入，勿写入公开文档仓库
+
+### 4.6 Vite 公共路径（`base`）
 
 若 GitHub Pages 地址为 `https://<user>.github.io/<repo>/`（**非**根域名），须在 `vite.config.ts` 设置：
 
@@ -106,7 +126,7 @@ base: process.env.VITE_BASE_PATH ?? '/',
 
 （具体值在添加 workflow 时与仓库名对齐；未配置 `base` 时子路径部署会出现白屏或资源 404。）
 
-### 4.5 添加 GitHub Actions 工作流（模板）
+### 4.7 添加 GitHub Actions 工作流（模板）
 
 在仓库创建 `.github/workflows/` 下两个文件（可由 Cloud Agent 代写）：
 
@@ -185,7 +205,7 @@ jobs:
 
 > Gitee Pages 分支命名因账号设置而异，首次部署后于 Gitee 控制台核对并修改脚本中的目标分支。
 
-### 4.6 Cursor Cloud Agent 密钥（可选）
+### 4.8 Cursor Cloud Agent 密钥（可选）
 
 若希望 Agent 在云端执行一次性部署脚本，可在 [Cloud Agents Secrets](https://cursor.com/dashboard) 配置同名令牌；**推荐仍以 GitHub Actions 为准**，避免在 Agent 对话中重复粘贴密钥。
 
