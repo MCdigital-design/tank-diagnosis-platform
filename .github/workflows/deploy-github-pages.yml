@@ -30,6 +30,7 @@ jobs:
           VITE_PREVIEW_AUTH: 'true'
           VITE_PREVIEW_USER: ${{ secrets.PREVIEW_USER }}
           VITE_PREVIEW_PASS: ${{ secrets.PREVIEW_PASS }}
+          VITE_HERO_TANK_MODE: procedural
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
