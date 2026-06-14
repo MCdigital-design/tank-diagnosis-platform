@@ -12,7 +12,9 @@
     "build": "tsc -b && vite build",
     "build:preview": "tsc -b && cross-env VITE_PREVIEW_AUTH=true VITE_PREVIEW_USER=Z-Float VITE_PREVIEW_PASS=008AAA VITE_BASE_PATH=/ vite build",
     "preview": "vite preview",
-    "preview:dist": "npm run build:preview && vite preview"
+    "preview:dist": "npm run build:preview && vite preview",
+    "dev:v2": "cross-env VITE_HERO_TANK_MODE=procedural vite",
+    "blender:hero": "node -e \"console.log('Run ./scripts/blender/export-hero-tank.sh (or .ps1 on Windows) with Blender installed')\""
   },
   "dependencies": {
     "@fontsource/noto-sans-sc": "^5.2.9",

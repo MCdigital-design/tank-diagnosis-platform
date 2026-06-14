@@ -2,9 +2,22 @@ import { Component, Suspense, useEffect, useMemo, useState, type ReactNode } fro
 import type { ThreeEvent } from '@react-three/fiber'
 import { useCursor, useGLTF } from '@react-three/drei'
 import { Box3, MeshStandardMaterial, Vector3, type Material, type Object3D } from 'three'
+import { DetailedTank } from './DetailedTank'
 import { SimpleTank, type TankMeshProps } from './SimpleTank'
 
-const useHeroGlb = import.meta.env.VITE_USE_HERO_GLB !== 'false'
+export type HeroTankMode = 'procedural' | 'glb' | 'simple'
+
+function resolveHeroTankMode(): HeroTankMode {
+  const mode = import.meta.env.VITE_HERO_TANK_MODE?.toLowerCase()
+  if (mode === 'glb' || mode === 'simple' || mode === 'procedural') {
+    return mode
+  }
+  // Legacy flag: VITE_USE_HERO_GLB=false → simple only
+  if (import.meta.env.VITE_USE_HERO_GLB === 'false') {
+    return 'simple'
+  }
+  return 'procedural'
+}
 
 export type HeroTankModelProps = TankMeshProps & {
   modelPath?: string
@@ -144,8 +157,14 @@ class GltfErrorBoundary extends Component<GltfErrorBoundaryProps, GltfErrorBound
 }
 
 export function HeroTankModel(props: HeroTankModelProps) {
-  if (!useHeroGlb) {
+  const mode = resolveHeroTankMode()
+
+  if (mode === 'simple') {
     return <SimpleTank {...props} />
+  }
+
+  if (mode === 'procedural') {
+    return <DetailedTank {...props} />
   }
 
   const resolvedPath = resolveModelPath(props.modelPath)
@@ -158,7 +177,7 @@ export function HeroTankModel(props: HeroTankModelProps) {
   )
 
   return (
-    <GltfErrorBoundary fallback={<SimpleTank {...props} />}>
+    <GltfErrorBoundary fallback={<DetailedTank {...props} />}>
       <Suspense fallback={placeholder}>
         <HeroGltfTank {...props} resolvedPath={resolvedPath} />
       </Suspense>

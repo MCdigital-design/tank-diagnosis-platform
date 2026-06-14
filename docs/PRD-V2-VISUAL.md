@@ -47,6 +47,7 @@
 | 阶段 | 交付 |
 |------|------|
 | **V2-A** | 英雄罐 GLB 接入 + SimpleTank 回退（`HeroTankModel`） |
+| **V2-A.0** | ✅ `DetailedTank` 程序英雄罐 + Blender 导出脚本（`scripts/blender/`） |
 | **V2-B** | 场站地面 / 管廊 / 照明上下文 |
 | **V2-C** | 测点锚点与 3D 标记对齐 |
 | **V2-D** | 面板与 mock 信息密度、动效 parity |
@@ -61,7 +62,8 @@
 ## 7. 集成里程碑
 
 1. ✅ `HeroTankModel` spike + `TankScene3D` 接线  
-2. ☐ Bake-off 选定管线，提交 `public/models/tank_hero.glb`  
-3. ☐ 场站 GLB 与相机默认位姿对齐 mock  
-4. ☐ 锚点驱动 `RoofSensorMarkers` 坐标  
-5. ☐ 性能验收（首帧、FPS、移动端 WebGL 降级）
+2. ✅ `DetailedTank` 程序英雄罐 + `scripts/blender/generate_hero_tank.py`  
+3. ☐ Bake-off 选定管线，提交 `public/models/tank_hero.glb`  
+4. ☐ 场站 GLB 与相机默认位姿对齐 mock  
+5. ☐ 锚点驱动 `RoofSensorMarkers` 坐标  
+6. ☐ 性能验收（首帧、FPS、移动端 WebGL 降级）

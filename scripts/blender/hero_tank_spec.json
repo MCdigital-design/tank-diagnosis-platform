@@ -1,0 +1,62 @@
+{
+  "version": "1.0",
+  "reference": "docs/reference/v2-command-center-mock.png",
+  "description": "外浮顶储罐英雄罐 — 与 src/data/heroTankSpec.ts 比例对齐",
+  "units": "meters",
+  "base": {
+    "radius": 2.35,
+    "height": 5.4,
+    "origin": "tank_bottom_center"
+  },
+  "shellPanels": 24,
+  "roofHeightRatio": 0.94,
+  "roofRadiusRatio": 0.91,
+  "seal": {
+    "heightRatio": 0.028,
+    "radiusOutRatio": 1.04,
+    "radiusInRatio": 0.96
+  },
+  "walkway": {
+    "heightRatio": 0.018,
+    "radiusRatio": 1.055,
+    "railHeightRatio": 0.045,
+    "railPosts": 32
+  },
+  "foundation": {
+    "heightRatio": 0.035,
+    "radiusRatio": 1.06
+  },
+  "ladder": {
+    "angleRadians": -1.5708,
+    "widthRatio": 0.055,
+    "railOffsetRatio": 0.02,
+    "cageRungs": 14
+  },
+  "pipes": [
+    { "angleRadians": 0.35, "heightRatio": 0.22, "lengthRatio": 0.28, "radiusRatio": 0.035 },
+    { "angleRadians": 2.1, "heightRatio": 0.38, "lengthRatio": 0.22, "radiusRatio": 0.028 },
+    { "angleRadians": -1.2, "heightRatio": 0.55, "lengthRatio": 0.18, "radiusRatio": 0.025 }
+  ],
+  "vent": {
+    "angleRadians": 0.9,
+    "radiusRatio": 0.045,
+    "heightRatio": 0.12
+  },
+  "anchors": {
+    "anchor_fire": [0, -0.42],
+    "anchor_ground": [0.38, 0.1],
+    "anchor_level": [-0.25, 0.32],
+    "anchor_seal": [0.15, -0.28]
+  },
+  "materials": {
+    "shell": { "baseColor": [0.42, 0.52, 0.62, 1], "metallic": 0.55, "roughness": 0.42 },
+    "roof": { "baseColor": [0.72, 0.77, 0.82, 1], "metallic": 0.62, "roughness": 0.38 },
+    "detail": { "baseColor": [0.48, 0.55, 0.62, 1], "metallic": 0.7, "roughness": 0.35 },
+    "rail": { "baseColor": [0.94, 0.75, 0.25, 1], "metallic": 0.75, "roughness": 0.3 }
+  },
+  "export": {
+    "output": "../../public/models/tank_hero.glb",
+    "applyModifiers": true,
+    "exportExtras": true
+  }
+}
