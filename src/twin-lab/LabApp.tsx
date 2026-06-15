@@ -23,9 +23,9 @@ function pushVariantToUrl(variant: VariantId) {
 
 async function fetchFileSizeMb(url: string): Promise<number | null> {
   try {
-    const res = await fetch(url, { method: 'HEAD' })
-    if (!res.ok) return null
-    const len = res.headers.get('content-length')
+    const res = await fetch(url, { method: 'GET', headers: { Range: 'bytes=0-0' } })
+    if (!res.ok && res.status !== 206) return null
+    const len = res.headers.get('content-range')?.split('/')[1] ?? res.headers.get('content-length')
     if (!len) return null
     return Number(len) / (1024 * 1024)
   } catch {
@@ -43,7 +43,8 @@ export function LabApp() {
     triangles: 0,
     fileMb: null,
     missing: true,
-    usedFallback: false,
+    usedFallback: true,
+    glbLoaded: false,
   })
 
   const glbPath = useMemo(() => variantGlbPath(variant), [variant])
@@ -65,11 +66,18 @@ export function LabApp() {
   const handleVariant = useCallback((id: VariantId) => {
     setVariant(id)
     pushVariantToUrl(id)
-    setStats((s) => ({ ...s, loadMs: 0, triangles: 0, fileMb: null }))
+    setStats((s) => ({
+      ...s,
+      loadMs: 0,
+      triangles: 0,
+      fileMb: null,
+      usedFallback: true,
+      glbLoaded: false,
+    }))
   }, [])
 
   const handleSceneStats = useCallback(
-    (partial: Pick<LabStats, 'loadMs' | 'triangles' | 'missing' | 'usedFallback'>) => {
+    (partial: Pick<LabStats, 'loadMs' | 'triangles' | 'missing' | 'usedFallback' | 'glbLoaded'>) => {
       setStats((s) => ({ ...s, ...partial }))
     },
     [],
@@ -143,7 +151,8 @@ export function LabApp() {
           <div className="lab-canvas-wrap">
             <Canvas
               camera={{ position: cam.position, fov: cam.fov, near: 0.1, far: 200 }}
-              gl={{ antialias: true, alpha: false }}
+              gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
+              style={{ background: '#0a1420' }}
               shadows
             >
               <LabEnvironment>
@@ -155,6 +164,13 @@ export function LabApp() {
                 />
               </LabEnvironment>
             </Canvas>
+            <div
+              className={`lab-status-banner ${stats.usedFallback ? 'lab-status-banner--fallback' : 'lab-status-banner--glb'}`}
+            >
+              {stats.usedFallback
+                ? `PROCEDURAL FALLBACK — ${meta?.glbFile ?? 'tank'} not loaded`
+                : `GLB ACTIVE — ${meta?.glbFile}`}
+            </div>
             <div className="lab-canvas-badge">
               <span>{meta?.glbFile}</span>
             </div>

@@ -18,6 +18,7 @@
     "build:lab": "tsc -b && vite build",
     "blender:hero": "node -e \"console.log('Run ./scripts/blender/export-hero-tank.sh (or .ps1 on Windows) with Blender installed')\"",
     "twin-lab:export-d": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/twin-lab/export-route-d.ps1",
+    "twin-lab:export-procedural": "node scripts/twin-lab/export-procedural-glb.mjs all",
     "twin-lab:download-c": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/twin-lab/download-route-c.ps1",
     "twin-lab:package-winner": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/twin-lab/package-winner.ps1",
     "sprint:check": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/twin-lab/sprint-check.ps1",

@@ -69,7 +69,7 @@ export async function resolveBestAvailableVariant(): Promise<VariantId> {
   for (const id of ROUTE_PRIORITY) {
     const path = variantGlbPath(id)
     try {
-      const res = await fetch(path, { method: 'HEAD' })
+      const res = await fetch(path, { method: 'GET', headers: { Range: 'bytes=0-15' } })
       if (res.ok) return id
     } catch {
       /* try next route */

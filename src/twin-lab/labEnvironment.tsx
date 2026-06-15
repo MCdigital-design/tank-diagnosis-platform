@@ -1,20 +1,30 @@
-import { ContactShadows, Environment, Grid } from '@react-three/drei'
-import type { ReactNode } from 'react'
+import { ContactShadows, Grid } from '@react-three/drei'
+import { useEffect, type ReactNode } from 'react'
+import { Color } from 'three'
+import { useThree } from '@react-three/fiber'
 
 type Props = {
   children: ReactNode
 }
 
+function SceneBackground() {
+  const { scene } = useThree()
+  useEffect(() => {
+    scene.background = new Color('#0a1420')
+  }, [scene])
+  return null
+}
+
 export function LabEnvironment({ children }: Props) {
   return (
     <>
+      <SceneBackground />
       <color attach="background" args={['#0a1420']} />
       <fog attach="fog" args={['#0a1420', 28, 72]} />
-      <ambientLight intensity={0.35} />
-      <directionalLight position={[12, 18, 8]} intensity={1.15} castShadow />
-      <directionalLight position={[-8, 10, -6]} intensity={0.4} />
-
-      <Environment preset="city" />
+      <ambientLight intensity={0.55} />
+      <directionalLight position={[12, 18, 8]} intensity={1.25} castShadow />
+      <directionalLight position={[-8, 10, -6]} intensity={0.45} />
+      <hemisphereLight args={['#8ab0d0', '#1a2838', 0.35]} />
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
         <planeGeometry args={[80, 80]} />

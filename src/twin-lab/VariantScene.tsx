@@ -12,6 +12,7 @@ type LoadStats = {
   triangles: number
   missing: boolean
   usedFallback: boolean
+  glbLoaded: boolean
 }
 
 type VariantSceneProps = {
@@ -69,7 +70,7 @@ type VariantGltfProps = {
   onStats: (stats: LoadStats) => void
 }
 
-function VariantGltf({ glbPath, onStats }: VariantGltfProps) {
+function VariantGltf({ glbPath, onStats, onEmpty }: VariantGltfProps & { onEmpty: () => void }) {
   const started = useMemo(() => performance.now(), [glbPath])
   const { scene } = useGLTF(glbPath)
   const model = useMemo(
@@ -78,13 +79,19 @@ function VariantGltf({ glbPath, onStats }: VariantGltfProps) {
   )
 
   useEffect(() => {
+    const tris = estimateTriangles(model)
+    if (tris < 100) {
+      onEmpty()
+      return
+    }
     onStats({
       loadMs: Math.round(performance.now() - started),
-      triangles: estimateTriangles(model),
+      triangles: tris,
       missing: false,
       usedFallback: false,
+      glbLoaded: true,
     })
-  }, [model, onStats, started])
+  }, [model, onEmpty, onStats, started])
 
   return <primitive object={model} />
 }
@@ -116,15 +123,22 @@ class GltfErrorBoundary extends Component<GltfErrorBoundaryProps, GltfErrorBound
   }
 }
 
-function ProceduralFallback({ onStats }: { onStats: (stats: LoadStats) => void }) {
+function ProceduralFallback({
+  onStats,
+  reason,
+}: {
+  onStats: (stats: LoadStats) => void
+  reason: 'missing' | 'error' | 'loading'
+}) {
   useEffect(() => {
     onStats({
       loadMs: 0,
       triangles: 0,
-      missing: true,
+      missing: reason !== 'loading',
       usedFallback: true,
+      glbLoaded: false,
     })
-  }, [onStats])
+  }, [onStats, reason])
 
   return (
     <DetailedTank
@@ -139,35 +153,64 @@ function ProceduralFallback({ onStats }: { onStats: (stats: LoadStats) => void }
   )
 }
 
+async function checkGlbAvailable(url: string): Promise<boolean> {
+  try {
+    const res = await fetch(url, { method: 'GET', headers: { Range: 'bytes=0-15' } })
+    return res.ok
+  } catch {
+    return false
+  }
+}
+
 export function VariantScene({ glbPath, cameraPreset, onStats }: VariantSceneProps) {
   const [fps, setFps] = useState(0)
-  const [useFallback, setUseFallback] = useState(false)
+  const [glbAvailable, setGlbAvailable] = useState<boolean | null>(null)
+  const [loadFailed, setLoadFailed] = useState(false)
+  const [emptyGlb, setEmptyGlb] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    setGlbAvailable(null)
+    setLoadFailed(false)
+    setEmptyGlb(false)
+    checkGlbAvailable(glbPath).then((ok) => {
+      if (!cancelled) setGlbAvailable(ok)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [glbPath])
+
+  const useFallback = glbAvailable === false || loadFailed || emptyGlb
+  const showProcedural = glbAvailable === null || useFallback
 
   const handleStats = (stats: LoadStats) => {
     onStats(stats)
   }
+
+  const fallbackReason =
+    glbAvailable === null ? 'loading' : useFallback ? 'missing' : 'loading'
 
   return (
     <>
       <CameraRig preset={cameraPreset} />
       <FpsReporter onFps={setFps} />
       <group>
-        {useFallback ? (
-          <ProceduralFallback onStats={handleStats} />
+        {showProcedural ? (
+          <ProceduralFallback onStats={handleStats} reason={fallbackReason} />
         ) : (
           <GltfErrorBoundary
-            onFallback={() => setUseFallback(true)}
-            fallback={<ProceduralFallback onStats={handleStats} />}
+            onFallback={() => setLoadFailed(true)}
+            fallback={<ProceduralFallback onStats={handleStats} reason="error" />}
           >
             <Suspense
-              fallback={
-                <mesh position={[0, LAB_TANK_HEIGHT / 2, 0]}>
-                  <cylinderGeometry args={[LAB_TANK_RADIUS, LAB_TANK_RADIUS, LAB_TANK_HEIGHT, 24]} />
-                  <meshStandardMaterial color="#6b849c" transparent opacity={0.25} />
-                </mesh>
-              }
+              fallback={<ProceduralFallback onStats={handleStats} reason="loading" />}
             >
-              <VariantGltf glbPath={glbPath} onStats={handleStats} />
+              <VariantGltf
+                glbPath={glbPath}
+                onStats={handleStats}
+                onEmpty={() => setEmptyGlb(true)}
+              />
             </Suspense>
           </GltfErrorBoundary>
         )}

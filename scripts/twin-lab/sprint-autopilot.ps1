@@ -1,5 +1,5 @@
-# Twin-Lab 3-day sprint autopilot — check variants, run Route D, print next actions
-# Run: npm run sprint:autopilot
+# Twin-Lab 3-hour sprint autopilot — check variants, export GLBs, print next actions
+# Run: npm run sprint:autopilot  OR  /loop 30m npm run sprint:autopilot
 $ErrorActionPreference = "Continue"
 $Root = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 Set-Location $Root
@@ -8,7 +8,7 @@ $VariantsDir = Join-Path $Root "public\models\variants"
 $HeroPath = Join-Path $Root "public\models\tank_hero.glb"
 $Priority = @("D", "C", "B", "A", "E", "F")
 $RouteScripts = @{
-  D = "npm run twin-lab:export-d"
+  D = "npm run twin-lab:export-d  (fallback: npm run twin-lab:export-procedural)"
   C = "npm run twin-lab:download-c"
   B = "See scripts/twin-lab/route-b-meshy.md + route-b-meshy-cleanup agent"
   A = "Invoke route-a-blender-mcp agent (Blender MCP required)"
@@ -27,7 +27,13 @@ Write-Host "[1/4] Route D — Blender baseline export..." -ForegroundColor Yello
 $dExit = $LASTEXITCODE
 if ($dExit -ne 0) {
   Write-Host "  Route D blocked (Blender not installed or export failed)." -ForegroundColor DarkYellow
-  Write-Host "  Fix: Install Blender 3.6+ or set BLENDER_BIN, then re-run." -ForegroundColor DarkYellow
+  Write-Host "  Trying procedural fallback..." -ForegroundColor DarkYellow
+  npm run twin-lab:export-procedural 2>&1 | Out-Null
+  if ($LASTEXITCODE -eq 0) {
+    Write-Host "  Procedural export OK (tank_a/b/d/e/f.glb)" -ForegroundColor Green
+  } else {
+    Write-Host "  Fix: Install Blender 3.6+ or set BLENDER_BIN, then re-run." -ForegroundColor DarkYellow
+  }
 }
 
 # 2. Scan variants
@@ -77,6 +83,6 @@ if ($next) {
 Write-Host ""
 Write-Host "Lab viewer:  npm run dev:lab"
 Write-Host "Sprint check:  npm run sprint:check"
-Write-Host "Autopilot agent: invoke twin-lab-autopilot (every 2–4h via /loop or Automations)"
+Write-Host "Autopilot agent: invoke twin-lab-autopilot (every 30m via /loop 30m npm run sprint:autopilot)"
 Write-Host "Matrix:        docs/TWIN-LAB-MATRIX.md"
 Write-Host ""

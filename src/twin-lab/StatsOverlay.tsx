@@ -8,6 +8,7 @@ export type LabStats = {
   fileMb: number | null
   missing: boolean
   usedFallback: boolean
+  glbLoaded: boolean
 }
 
 type Props = {
@@ -30,12 +31,15 @@ export function StatsOverlay({ variant, stats }: Props) {
         <span>Tris: {stats.triangles ? stats.triangles.toLocaleString() : '—'}</span>
         <span>GLB: {stats.fileMb != null ? `${stats.fileMb.toFixed(2)} MB` : '—'}</span>
       </div>
-      {stats.missing && (
-        <p className="lab-stats__warn">
-          {stats.usedFallback
-            ? `Missing public/models/variants/${meta?.glbFile} — showing procedural fallback (Route D baseline).`
-            : 'Awaiting GLB export for this route.'}
+      {stats.usedFallback && (
+        <p className="lab-stats__warn lab-stats__warn--fallback">
+          {stats.missing
+            ? `GLB missing — showing procedural DetailedTank fallback. Export: npm run twin-lab:export-procedural`
+            : 'Loading GLB… showing procedural DetailedTank until ready.'}
         </p>
+      )}
+      {!stats.usedFallback && stats.glbLoaded && (
+        <p className="lab-stats__ok">GLB loaded — {meta?.glbFile}</p>
       )}
     </footer>
   )

@@ -21,8 +21,16 @@ Place exported hero tanks here. The lab viewer loads `tank_{a-f}.glb` via `npm r
 | `tank_b.glb` | B | Meshy → Blender cleanup |
 | `tank_c.glb` | C | Catalog asset (license logged below) |
 | `tank_d.glb` | D | `scripts/blender/generate_hero_tank.py` |
-| `tank_e.glb` | E | Unity HDRP export |
-| `tank_f.glb` | F | Unreal Lumen export |
+| `tank_e.glb` | E | Unity HDRP export (procedural stand-in until HDRP bake) |
+| `tank_f.glb` | F | Unreal Lumen export (procedural stand-in until Lumen bake) |
+
+## Procedural fallback (no Blender/Meshy/Unity)
+
+```powershell
+npm run twin-lab:export-procedural
+```
+
+Generates A/B/D/E/F from `scripts/twin-lab/export-procedural-glb.mjs` (Three.js GLTFExporter).
 
 ## Route C — catalog candidates
 

@@ -146,6 +146,7 @@ body,
 .lab-canvas-wrap {
   position: relative;
   min-height: 0;
+  background: #0a1420;
 }
 
 .lab-canvas-wrap canvas {
@@ -213,6 +214,43 @@ body,
   margin: 0;
   color: #e8b060;
   font-size: 0.72rem;
+}
+
+.lab-stats__warn--fallback {
+  color: #f0a050;
+}
+
+.lab-stats__ok {
+  margin: 0;
+  color: #50d890;
+  font-size: 0.72rem;
+}
+
+.lab-status-banner {
+  position: absolute;
+  top: 0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  padding: 0.35rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.lab-status-banner--fallback {
+  background: rgba(180, 90, 20, 0.85);
+  color: #fff4e0;
+  border: 1px solid #e8a040;
+}
+
+.lab-status-banner--glb {
+  background: rgba(20, 100, 60, 0.85);
+  color: #d0ffe8;
+  border: 1px solid #40c080;
 }
 
 @media (max-width: 900px) {
