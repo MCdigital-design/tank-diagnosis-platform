@@ -1,0 +1,26 @@
+---
+description: Autonomous Twin-Lab 3-day sprint mode — hero tank GLB bake-off routes A–F
+globs:
+  - twin-lab/**
+  - public/models/**
+  - scripts/twin-lab/**
+  - src/twin-lab/**
+  - docs/TWIN-LAB*.md
+  - .cursor/agents/twin-lab*.md
+  - .cursor/agents/route-*.md
+alwaysApply: false
+---
+
+# Twin-Lab sprint (autonomous mode)
+
+When working on Twin-Lab hero tank assets:
+
+1. **Branch:** `twin-lab/hero-tank`
+2. **Route priority:** D → C → B → A → E → F
+3. **Viewer:** `npm run dev:lab` — compare to `docs/reference/v2-command-center-mock.png`
+4. **Frozen until winner:** `src/App.tsx`, `src/components/DashboardPanels.tsx`
+5. **Autopilot:** invoke agent `twin-lab-autopilot` or run `npm run sprint:autopilot`
+6. **Honest constraints:** Blender/Unity/Unreal/Meshy require local Windows; cloud cannot export GLBs
+7. **Do not edit** `~/.cursor/plans/twin-lab_hero_tank_*.plan.md`
+
+After each export, update `docs/TWIN-LAB-MATRIX.md`. On winner, run `npm run twin-lab:package-winner` and set `VITE_HERO_TANK_MODE=glb`.

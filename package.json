@@ -17,7 +17,11 @@
     "dev:lab": "vite --open /twin-lab/",
     "build:lab": "tsc -b && vite build",
     "blender:hero": "node -e \"console.log('Run ./scripts/blender/export-hero-tank.sh (or .ps1 on Windows) with Blender installed')\"",
-    "twin-lab:export-d": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/twin-lab/export-route-d.ps1"
+    "twin-lab:export-d": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/twin-lab/export-route-d.ps1",
+    "twin-lab:download-c": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/twin-lab/download-route-c.ps1",
+    "twin-lab:package-winner": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/twin-lab/package-winner.ps1",
+    "sprint:check": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/twin-lab/sprint-check.ps1",
+    "sprint:autopilot": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/twin-lab/sprint-autopilot.ps1"
   },
   "dependencies": {
     "@fontsource/noto-sans-sc": "^5.2.9",

@@ -9,10 +9,19 @@ New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 $Blender = $env:BLENDER_BIN
 if (-not $Blender) {
   $candidates = @(
+    "${env:ProgramFiles}\Blender Foundation\Blender 4.3\blender.exe",
     "${env:ProgramFiles}\Blender Foundation\Blender 4.2\blender.exe",
     "${env:ProgramFiles}\Blender Foundation\Blender 4.1\blender.exe",
-    "${env:ProgramFiles}\Blender Foundation\Blender 3.6\blender.exe"
+    "${env:ProgramFiles}\Blender Foundation\Blender 4.0\blender.exe",
+    "${env:ProgramFiles}\Blender Foundation\Blender 3.6\blender.exe",
+    "${env:ProgramFiles(x86)}\Blender Foundation\Blender 3.6\blender.exe",
+    "${env:LOCALAPPDATA}\Programs\Blender Foundation\Blender 4.2\blender.exe"
   )
+  $pf = "${env:ProgramFiles}\Blender Foundation"
+  if (Test-Path $pf) {
+    Get-ChildItem -Path $pf -Filter blender.exe -Recurse -ErrorAction SilentlyContinue |
+      ForEach-Object { $candidates += $_.FullName }
+  }
   foreach ($c in $candidates) {
     if (Test-Path $c) { $Blender = $c; break }
   }

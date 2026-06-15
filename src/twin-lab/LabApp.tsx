@@ -9,7 +9,7 @@ import { VariantPicker } from './VariantPicker'
 import { VariantScene } from './VariantScene'
 import type { CameraPresetId, VariantId, ViewMode } from './types'
 import {
-  parseVariantFromUrl,
+  resolveBestAvailableVariant,
   variantGlbPath,
   VARIANTS,
 } from './variantConfig'
@@ -34,7 +34,7 @@ async function fetchFileSizeMb(url: string): Promise<number | null> {
 }
 
 export function LabApp() {
-  const [variant, setVariant] = useState<VariantId>(() => parseVariantFromUrl())
+  const [variant, setVariant] = useState<VariantId>('D')
   const [cameraPreset, setCameraPreset] = useState<CameraPresetId>('hero45')
   const [viewMode, setViewMode] = useState<ViewMode>('split')
   const [stats, setStats] = useState<LabStats>({
@@ -48,6 +48,19 @@ export function LabApp() {
 
   const glbPath = useMemo(() => variantGlbPath(variant), [variant])
   const meta = VARIANTS.find((v) => v.id === variant)
+
+  useEffect(() => {
+    let cancelled = false
+    resolveBestAvailableVariant().then((id) => {
+      if (!cancelled) {
+        setVariant(id)
+        pushVariantToUrl(id)
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const handleVariant = useCallback((id: VariantId) => {
     setVariant(id)

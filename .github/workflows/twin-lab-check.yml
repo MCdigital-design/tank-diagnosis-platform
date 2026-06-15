@@ -1,0 +1,29 @@
+name: Twin-Lab Sprint Check
+
+on:
+  push:
+    branches: [twin-lab/hero-tank, main, master]
+    paths:
+      - 'src/twin-lab/**'
+      - 'scripts/twin-lab/**'
+      - 'public/models/**'
+      - 'docs/TWIN-LAB*.md'
+      - '.cursor/agents/twin-lab*.md'
+  pull_request:
+    paths:
+      - 'src/twin-lab/**'
+      - 'scripts/twin-lab/**'
+  workflow_dispatch:
+
+jobs:
+  sprint-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - name: Twin-Lab sprint check (no secrets, no Blender)
+        run: npm run sprint:check

@@ -50,12 +50,32 @@ export const VARIANTS: VariantMeta[] = [
 
 const VARIANT_IDS = new Set(VARIANTS.map((v) => v.id))
 
+/** Bake-off priority: baseline script first, then catalog, then AI/engine routes. */
+export const ROUTE_PRIORITY: VariantId[] = ['D', 'C', 'B', 'A', 'E', 'F']
+
 export function parseVariantFromUrl(): VariantId {
   const raw = new URLSearchParams(window.location.search).get('variant')?.toUpperCase()
   if (raw && VARIANT_IDS.has(raw as VariantId)) {
     return raw as VariantId
   }
-  return 'A'
+  return 'D'
+}
+
+export async function resolveBestAvailableVariant(): Promise<VariantId> {
+  const urlVariant = new URLSearchParams(window.location.search).get('variant')?.toUpperCase()
+  if (urlVariant && VARIANT_IDS.has(urlVariant as VariantId)) {
+    return urlVariant as VariantId
+  }
+  for (const id of ROUTE_PRIORITY) {
+    const path = variantGlbPath(id)
+    try {
+      const res = await fetch(path, { method: 'HEAD' })
+      if (res.ok) return id
+    } catch {
+      /* try next route */
+    }
+  }
+  return 'D'
 }
 
 export function variantGlbPath(variant: VariantId): string {
