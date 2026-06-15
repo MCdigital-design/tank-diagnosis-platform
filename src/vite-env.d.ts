@@ -1,5 +1,10 @@
 /// <reference types="vite/client" />
 
+declare module '*.png' {
+  const src: string
+  export default src
+}
+
 interface ImportMetaEnv {
   readonly VITE_PREVIEW_AUTH?: string
   readonly VITE_PREVIEW_USER?: string

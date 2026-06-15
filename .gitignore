@@ -8,3 +8,12 @@ tsconfig.tsbuildinfo
 
 # Legacy ForceControl export — local reference only; too large for GitHub preview repo
 docs/Project/
+
+# Twin-Lab local DCC caches
+twin-lab/unity/Library/
+twin-lab/unity/Logs/
+twin-lab/unity/Temp/
+twin-lab/unreal/Saved/
+twin-lab/unreal/Intermediate/
+twin-lab/unreal/DerivedDataCache/
+.cursor/mcp.json

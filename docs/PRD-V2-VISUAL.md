@@ -2,6 +2,7 @@
 
 > 版本 v0.1 · 2026-06-14 · 状态：**草案**  
 > 视觉参考：[`docs/reference/v2-command-center-mock.png`](reference/v2-command-center-mock.png)  
+> **执行轨道：** [Twin-Lab 英雄罐 Bake-off](TWIN-LAB-MATRIX.md) · `npm run dev:lab`  
 > 上游：v1.2 演示平台 · `docs/ROADMAP.md`
 
 ---

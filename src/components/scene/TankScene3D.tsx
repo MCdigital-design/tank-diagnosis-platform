@@ -3,6 +3,7 @@ import { Grid, OrbitControls } from '@react-three/drei'
 import { useTankSelection } from '../../context/TankSelectionContext'
 import { tanks3D } from '../../data/mock'
 import { SceneSelectionLink, type SceneSelectionLinkHandle } from './SceneSelectionLink'
+import { HeroSceneEnvironment } from './HeroSceneEnvironment'
 import { RoofSensorMarkers } from './RoofSensorMarkers'
 import { RoofTravelGauge } from './RoofTravelGauge'
 import { SensorDetailCard } from './SensorDetailCard'
@@ -14,6 +15,10 @@ import { useSelectionLinkLoop } from './useSelectionLinkLoop'
 
 const noopRaycast = () => null
 
+function useHeroGlbLighting(): boolean {
+  return import.meta.env.VITE_HERO_TANK_MODE?.toLowerCase() === 'glb'
+}
+
 type SceneProps = {
   activeTankId: string | null
   activeSensorId: string | null
@@ -22,6 +27,7 @@ type SceneProps = {
 }
 
 function Scene({ activeTankId, activeSensorId, onSelectTank, onSelectSensor }: SceneProps) {
+  const heroGlbLighting = useHeroGlbLighting()
   const tankMeshes = tanks3D.map((t, i) => ({
     id: t.id,
     position: t.position,
@@ -33,9 +39,15 @@ function Scene({ activeTankId, activeSensorId, onSelectTank, onSelectSensor }: S
   return (
     <>
       <color attach="background" args={['#0a1420']} />
-      <ambientLight intensity={0.65} />
-      <directionalLight position={[10, 14, 8]} intensity={1.1} />
-      <directionalLight position={[-6, 8, -4]} intensity={0.35} />
+      {heroGlbLighting ? (
+        <HeroSceneEnvironment />
+      ) : (
+        <>
+          <ambientLight intensity={0.65} />
+          <directionalLight position={[10, 14, 8]} intensity={1.1} />
+          <directionalLight position={[-6, 8, -4]} intensity={0.35} />
+        </>
+      )}
 
       <Grid
         raycast={noopRaycast}

@@ -18,6 +18,16 @@ npm run dev:bg
 - `npm run dev:stop` — 停止后台服务
 - `npm run preview` — 构建后预览，同样使用 5173 端口
 
+## Twin-Lab（英雄罐 Bake-off）
+
+独立对比视图，不加载指挥台面板：
+
+```bash
+npm run dev:lab
+```
+
+打开 **http://127.0.0.1:5173/twin-lab/?variant=A**，对照 mock 切换 A–F 变体。详见 [twin-lab/README.md](twin-lab/README.md)。
+
 打开工作区时，若已启用 VS Code/Cursor 任务，会自动执行后台 dev（可在 `.vscode/tasks.json` 里关闭 `runOn: folderOpen`）。
 
 ## 构建

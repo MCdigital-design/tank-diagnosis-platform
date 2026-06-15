@@ -14,7 +14,10 @@
     "preview": "vite preview",
     "preview:dist": "npm run build:preview && vite preview",
     "dev:v2": "cross-env VITE_HERO_TANK_MODE=procedural vite",
-    "blender:hero": "node -e \"console.log('Run ./scripts/blender/export-hero-tank.sh (or .ps1 on Windows) with Blender installed')\""
+    "dev:lab": "vite --open /twin-lab/",
+    "build:lab": "tsc -b && vite build",
+    "blender:hero": "node -e \"console.log('Run ./scripts/blender/export-hero-tank.sh (or .ps1 on Windows) with Blender installed')\"",
+    "twin-lab:export-d": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/twin-lab/export-route-d.ps1"
   },
   "dependencies": {
     "@fontsource/noto-sans-sc": "^5.2.9",
